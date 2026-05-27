@@ -1,0 +1,97 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap');
+@import "tailwindcss";
+
+:root {
+  --brand-green:      #2D5E3A;
+  --brand-green-lt:   #3D7A4E;
+  --bg-page:          #EDEADE;
+  --bg-card:          #FFFFFF;
+  --text-heading:     #1C1C1C;
+  --text-body:        #3D3D3D;
+  --text-secondary:   #5A5A5A;
+  --text-muted:       #888888;
+  --border:           #D8D4C8;
+  --error:            #C0392B;
+  --success:          #2D5E3A;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg-page);
+  color: var(--text-body);
+}
+
+/* Hide print-only content on screen */
+.print-only {
+  display: none;
+}
+
+/* Impact badge tooltips */
+.impact-badge {
+  position: relative;
+  cursor: help;
+  display: inline-flex;
+}
+.impact-badge-tooltip {
+  display: none;
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 5px);
+  top: auto;
+  width: 230px;
+  padding: 7px 10px;
+  background: #1C1C1C;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+  border-radius: 4px;
+  z-index: 100;
+  white-space: normal;
+  pointer-events: none;
+  font-style: normal;
+  letter-spacing: 0;
+}
+.impact-badge:hover .impact-badge-tooltip {
+  display: block;
+}
+
+/* Frequency button tooltips */
+.freq-btn-wrapper {
+  position: relative;
+  display: inline-block;
+}
+.freq-btn-tooltip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1C1C1C;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 5px 9px;
+  border-radius: 4px;
+  white-space: nowrap;
+  z-index: 100;
+  pointer-events: none;
+}
+.freq-btn-wrapper:hover .freq-btn-tooltip {
+  display: block;
+}
+
+@media print {
+  .no-print { display: none !important; }
+  .print-only { display: block !important; }
+  body { background: white; font-size: 12px; orphans: 3; widows: 3; }
+  h1, h2, h3 { font-family: 'DM Serif Display', serif; page-break-after: auto; }
+  .card, [class*="card"] { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; break-inside: avoid; }
+  .section, [class*="section"] { page-break-inside: avoid; break-inside: avoid; }
+  .phase, [class*="phase"] { page-break-inside: avoid; break-inside: avoid; }
+  .task-row, [class*="task-row"] { page-break-inside: avoid; break-inside: avoid; }
+  .capability-card, [class*="capability-card"] { page-break-inside: avoid; break-inside: avoid; }
+  .page-break-before { page-break-before: always; }
+  tr { page-break-inside: avoid; break-inside: avoid; }
+}
