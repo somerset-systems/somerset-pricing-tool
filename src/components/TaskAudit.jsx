@@ -2,9 +2,9 @@ import { useState, useRef } from 'react'
 import { deriveTaskHours } from '../utils/calculations.js'
 
 const IMPACT_STYLE = {
-  High:   { background: '#2D5E3A', color: '#fff' },
-  Medium: { background: '#1C1C1C', color: '#fff' },
-  Low:    { background: '#888888', color: '#fff' },
+  High:   { background: 'var(--brand-green)', color: 'var(--bg-card)' },
+  Medium: { background: 'var(--text-heading)', color: 'var(--bg-card)' },
+  Low:    { background: 'var(--text-muted)', color: 'var(--bg-card)' },
 }
 
 const IMPACT_ORDER = { High: 0, Medium: 1, Low: 2 }
@@ -24,12 +24,12 @@ const FREQ_TOOLTIPS = {
 }
 
 const inputStyle = {
-  border: '1.5px solid #D8D4C8',
-  borderRadius: 6,
+  border: '1.5px solid var(--border)',
+  borderRadius: 5,
   padding: '5px 8px',
   font: '400 14px DM Sans',
   color: 'var(--text-heading)',
-  background: '#fff',
+  background: 'var(--bg-card)',
   outline: 'none',
   width: 56,
   textAlign: 'center',
@@ -37,15 +37,15 @@ const inputStyle = {
 
 function ImpactBadge({ level }) {
   return (
-    <div className="impact-badge flex-shrink-0">
+    <div className="impact-badge flex-shrink-0" tabIndex={0}>
       <span
         style={{
           ...IMPACT_STYLE[level],
-          padding: '2px 8px',
+          padding: '3px 9px',
           borderRadius: 4,
           fontSize: 11,
           fontWeight: 500,
-          letterSpacing: '0.02em',
+          letterSpacing: '0.03em',
         }}
       >
         {level}
@@ -57,33 +57,18 @@ function ImpactBadge({ level }) {
 
 function CustomCheckbox({ checked, onChange }) {
   return (
-    <div
-      onClick={() => onChange(!checked)}
-      className="flex-shrink-0"
-      style={{
-        width: 18,
-        height: 18,
-        borderRadius: 4,
-        border: checked ? 'none' : '1.5px solid var(--border)',
-        background: checked ? '#2D5E3A' : '#fff',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {checked && (
-        <svg width="11" height="8" viewBox="0 0 11 8" fill="none">
-          <path d="M1 4L4 7L10 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      )}
-    </div>
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+      className="task-checkbox"
+    />
   )
 }
 
 // People input: type=text so user can select-all and retype freely.
 // Commits parsed integer to parent only on blur; shows empty string while editing.
-function PeopleInput({ people, onPeopleChange }) {
+function PeopleInput({ id, people, onPeopleChange }) {
   const [local, setLocal] = useState(String(people))
 
   function handleChange(e) {
@@ -103,48 +88,54 @@ function PeopleInput({ people, onPeopleChange }) {
 
   return (
     <input
+      id={id}
       type="text"
       value={local}
       placeholder="2"
       onChange={handleChange}
       onBlur={handleBlur}
+      className="input-field"
       style={inputStyle}
     />
   )
 }
 
-function PeopleFreqControls({ people, frequency, onPeopleChange, onFreqChange }) {
+function PeopleFreqControls({ people, frequency, onPeopleChange, onFreqChange, staffInputId }) {
   const btnBase = {
-    padding: '4px 9px',
-    borderRadius: 4,
+    padding: '0 10px',
+    minHeight: 44,
+    display: 'inline-flex',
+    alignItems: 'center',
+    borderRadius: 5,
     fontSize: 12,
     fontWeight: 500,
     cursor: 'pointer',
-    border: '1.5px solid #2D5E3A',
     fontFamily: 'DM Sans, sans-serif',
-    lineHeight: 1.4,
+    lineHeight: 1,
   }
-  const active   = { background: '#2D5E3A', color: '#fff', borderColor: '#2D5E3A' }
-  const inactive = { background: 'transparent', color: '#2D5E3A' }
+  const active   = { ...btnBase, background: 'var(--brand-green)', color: 'var(--bg-card)', border: '1.5px solid var(--brand-green)' }
+  const inactive = { ...btnBase, background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1.5px solid var(--border)' }
 
   return (
     <div className="flex flex-wrap gap-3 items-center mt-2 ml-7">
       <div className="flex items-center gap-1.5">
-        <label className="text-xs" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
+        <label htmlFor={staffInputId} className="text-xs" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
           Staff affected:
         </label>
-        <PeopleInput people={people} onPeopleChange={onPeopleChange} />
+        <PeopleInput id={staffInputId} people={people} onPeopleChange={onPeopleChange} />
       </div>
 
-      <div className="flex items-center gap-1.5">
-        <span className="text-xs" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>How often:</span>
+      <fieldset style={{ border: 0, margin: 0, padding: 0, minInlineSize: 0 }} className="flex items-center gap-1.5">
+        <legend className="text-xs" style={{ color: 'var(--text-muted)', flexShrink: 0, padding: 0 }}>How often:</legend>
         <div className="flex gap-1">
           {FREQ_OPTIONS.map((opt) => (
             <div key={opt} className="freq-btn-wrapper">
               <button
                 type="button"
                 onClick={() => onFreqChange(opt)}
-                style={{ ...btnBase, ...(frequency === opt ? active : inactive) }}
+                aria-pressed={frequency === opt}
+                className={frequency === opt ? '' : 'freq-btn-inactive'}
+                style={frequency === opt ? active : inactive}
               >
                 {opt}
               </button>
@@ -152,7 +143,7 @@ function PeopleFreqControls({ people, frequency, onPeopleChange, onFreqChange })
             </div>
           ))}
         </div>
-      </div>
+      </fieldset>
     </div>
   )
 }
@@ -179,6 +170,8 @@ export default function TaskAudit({
   onContinue,
 }) {
   // Sort once on mount by impact only — never re-sorts on staff/frequency changes.
+  const canGenerate = tasks.some((t) => t.included) || customTasks.length > 0
+
   const sortedOrderRef = useRef(null)
   if (sortedOrderRef.current === null) {
     sortedOrderRef.current = [...tasks]
@@ -192,11 +185,11 @@ export default function TaskAudit({
   return (
     <div
       className="rounded-lg p-8"
-      style={{ background: 'var(--bg-card)', boxShadow: '0 2px 12px rgba(45,94,58,0.08)' }}
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
     >
       <h2
         className="text-2xl mb-2"
-        style={{ fontFamily: "'DM Serif Display', serif", color: 'var(--text-heading)', fontWeight: 400 }}
+        style={{ fontFamily: "'DM Serif Display', serif", color: 'var(--text-heading)', fontWeight: 400, textWrap: 'balance' }}
       >
         Where Is Your Team Losing Time?
       </h2>
@@ -210,14 +203,14 @@ export default function TaskAudit({
           <div
             key={task.id}
             style={{
-              background: task.included ? '#F0F4F1' : 'transparent',
+              background: task.included ? 'var(--bg-active)' : 'transparent',
               borderBottom: idx < sortedTasks.length - 1 || customTasks.length > 0 ? '1px solid var(--border)' : 'none',
               padding: '12px 32px',
               margin: '0 -32px',
               transition: 'background 0.15s',
             }}
           >
-            <div className="flex items-center gap-3">
+            <label className="flex items-center gap-3" style={{ cursor: 'pointer' }}>
               <CustomCheckbox
                 checked={task.included}
                 onChange={(val) => onTaskChange(task.id, 'included', val)}
@@ -226,9 +219,10 @@ export default function TaskAudit({
                 {task.label}
               </span>
               <ImpactBadge level={task.impact} />
-            </div>
+            </label>
             {task.included && (
               <PeopleFreqControls
+                staffInputId={`staff-${task.id}`}
                 people={task.people}
                 frequency={task.frequency}
                 onPeopleChange={(v) => onTaskChange(task.id, 'people', v)}
@@ -246,88 +240,103 @@ export default function TaskAudit({
             <div
               key={task.id}
               style={{
-                background: '#F0F4F1',
+                background: 'var(--bg-active)',
                 borderBottom: idx < customTasks.length - 1 ? '1px solid var(--border)' : 'none',
                 padding: '12px 32px',
                 margin: '0 -32px',
               }}
             >
-              <div className="flex items-center gap-3 flex-wrap">
-                <input
-                  type="text"
-                  value={task.label}
-                  onChange={(e) => onCustomTaskChange(task.id, 'label', e.target.value)}
-                  placeholder="Describe this task…"
-                  style={{
-                    flex: 1,
-                    minWidth: 140,
-                    border: '1.5px solid var(--border)',
-                    borderRadius: 6,
-                    padding: '6px 10px',
-                    font: '400 14px DM Sans',
-                    color: 'var(--text-heading)',
-                    background: '#fff',
-                    outline: 'none',
-                  }}
-                />
-                <select
-                  value={task.laborCategory}
-                  onChange={(e) => onCustomTaskChange(task.id, 'laborCategory', e.target.value)}
-                  aria-label="Labor category"
-                  style={{
-                    border: '1.5px solid var(--border)',
-                    borderRadius: 6,
-                    padding: '5px 8px',
-                    font: '400 13px DM Sans',
-                    color: 'var(--text-heading)',
-                    background: '#fff',
-                    cursor: 'pointer',
-                    outline: 'none',
-                  }}
-                >
-                  {LABOR_CATEGORY_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <select
-                  value={task.valueBucket}
-                  onChange={(e) => onCustomTaskChange(task.id, 'valueBucket', e.target.value)}
-                  aria-label="Value type"
-                  style={{
-                    border: '1.5px solid var(--border)',
-                    borderRadius: 6,
-                    padding: '5px 8px',
-                    font: '400 13px DM Sans',
-                    color: 'var(--text-heading)',
-                    background: '#fff',
-                    cursor: 'pointer',
-                    outline: 'none',
-                  }}
-                >
-                  {VALUE_BUCKET_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-                <ImpactBadge level="Medium" />
-                <button
-                  type="button"
-                  onClick={() => onCustomTaskRemove(task.id)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'var(--text-muted)',
-                    cursor: 'pointer',
-                    fontSize: 16,
-                    lineHeight: 1,
-                    padding: '2px 4px',
-                    flexShrink: 0,
-                  }}
-                  aria-label="Remove task"
-                >
-                  ×
-                </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    value={task.label}
+                    onChange={(e) => onCustomTaskChange(task.id, 'label', e.target.value)}
+                    placeholder="Describe this task…"
+                    className="input-field"
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      border: '1.5px solid var(--border)',
+                      borderRadius: 5,
+                      padding: '6px 10px',
+                      font: '400 14px DM Sans',
+                      color: 'var(--text-heading)',
+                      background: 'var(--bg-card)',
+                      outline: 'none',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => onCustomTaskRemove(task.id)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      cursor: 'pointer',
+                      fontSize: 18,
+                      lineHeight: 1,
+                      padding: 0,
+                      minWidth: 36,
+                      minHeight: 36,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                    }}
+                    aria-label="Remove task"
+                  >
+                    ×
+                  </button>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <select
+                    value={task.laborCategory}
+                    onChange={(e) => onCustomTaskChange(task.id, 'laborCategory', e.target.value)}
+                    aria-label="Labor category"
+                    title="Sets the hourly labor rate used in the ROI calculation"
+                    className="select-field"
+                    style={{
+                      border: '1.5px solid var(--border)',
+                      borderRadius: 5,
+                      padding: '5px 8px',
+                      font: '400 13px DM Sans',
+                      color: 'var(--text-heading)',
+                      background: 'var(--bg-card)',
+                      cursor: 'pointer',
+                      outline: 'none',
+                    }}
+                  >
+                    {LABOR_CATEGORY_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={task.valueBucket}
+                    onChange={(e) => onCustomTaskChange(task.id, 'valueBucket', e.target.value)}
+                    aria-label="Value type"
+                    title="Determines which ROI bucket this task contributes to"
+                    className="select-field"
+                    style={{
+                      border: '1.5px solid var(--border)',
+                      borderRadius: 5,
+                      padding: '5px 8px',
+                      font: '400 13px DM Sans',
+                      color: 'var(--text-heading)',
+                      background: 'var(--bg-card)',
+                      cursor: 'pointer',
+                      outline: 'none',
+                    }}
+                  >
+                    {VALUE_BUCKET_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <ImpactBadge level="Medium" />
+                </div>
               </div>
               <PeopleFreqControls
+                staffInputId={`staff-${task.id}`}
                 people={task.people}
                 frequency={task.frequency}
                 onPeopleChange={(v) => onCustomTaskChange(task.id, 'people', v)}
@@ -343,12 +352,16 @@ export default function TaskAudit({
         <button
           type="button"
           onClick={onCustomTaskAdd}
+          className="btn-secondary"
           style={{
             background: 'transparent',
-            border: '1.5px solid #2D5E3A',
-            color: '#2D5E3A',
-            padding: '8px 18px',
-            borderRadius: 6,
+            border: '1.5px solid var(--brand-green)',
+            color: 'var(--brand-green)',
+            padding: '0 18px',
+            minHeight: 40,
+            display: 'inline-flex',
+            alignItems: 'center',
+            borderRadius: 5,
             cursor: 'pointer',
             font: '500 13px DM Sans',
           }}
@@ -357,19 +370,37 @@ export default function TaskAudit({
         </button>
       </div>
 
-      <div className="mt-8 flex justify-between">
-        <button
-          onClick={onBack}
-          style={{ color: '#2D5E3A', border: '1.5px solid #2D5E3A', background: 'transparent', padding: '12px 28px', borderRadius: 6, cursor: 'pointer', font: '500 15px DM Sans' }}
-        >
-          Back
-        </button>
-        <button
-          onClick={onContinue}
-          style={{ background: '#2D5E3A', color: '#fff', border: 'none', padding: '12px 28px', borderRadius: 6, cursor: 'pointer', font: '500 15px DM Sans' }}
-        >
-          Generate Assessment
-        </button>
+      <div className="mt-8">
+        {!canGenerate && (
+          <p className="text-xs mb-3 text-center" style={{ color: 'var(--text-muted)' }}>
+            Check at least one task above to generate the assessment.
+          </p>
+        )}
+        <div className="flex justify-between">
+          <button
+            type="button"
+            onClick={onBack}
+            className="btn-secondary"
+            style={{ color: 'var(--text-body)', border: '1.5px solid var(--border)', background: 'transparent', padding: '12px 28px', borderRadius: 5, cursor: 'pointer', font: '500 15px DM Sans' }}
+          >
+            Back
+          </button>
+          <button
+            onClick={onContinue}
+            disabled={!canGenerate}
+            style={{
+              background: canGenerate ? 'var(--brand-green)' : '#D1D5DB',
+              color: '#fff',
+              border: 'none',
+              padding: '12px 28px',
+              borderRadius: 5,
+              cursor: canGenerate ? 'pointer' : 'not-allowed',
+              font: '500 15px DM Sans',
+            }}
+          >
+            Generate Assessment
+          </button>
+        </div>
       </div>
     </div>
   )

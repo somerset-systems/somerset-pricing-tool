@@ -19,13 +19,13 @@ function efficiencyLabel(ef) {
 
 const s = {
   sectionTitle: { fontFamily: 'DM Serif Display, serif', fontSize: 15, fontWeight: 400, color: '#1C1C1C', marginBottom: 10 },
-  label:  { fontSize: 10, color: '#888888', textTransform: 'uppercase', letterSpacing: '0.06em' },
+  label:  { fontSize: 10, color: '#666666', textTransform: 'uppercase', letterSpacing: '0.06em' },
   value:  { fontSize: 13, fontWeight: 600, color: '#1C1C1C', marginTop: 2 },
   body:   { fontSize: 12, color: '#3D3D3D', lineHeight: 1.6, margin: 0 },
-  muted:  { fontSize: 11, color: '#888888', fontStyle: 'italic', margin: 0 },
+  muted:  { fontSize: 11, color: '#666666', fontStyle: 'italic', margin: 0 },
   card:   { border: '1px solid #D8D4C8', borderLeft: '3px solid #2D5E3A', borderRadius: 6, padding: '16px 20px', marginBottom: 18, pageBreakInside: 'avoid', breakInside: 'avoid' },
   divider:{ borderTop: '1px solid #D8D4C8', marginTop: 16, paddingTop: 16 },
-  formula:{ fontSize: 10, color: '#888888', fontStyle: 'italic', padding: '0 8px 8px' },
+  formula:{ fontSize: 10, color: '#666666', fontStyle: 'italic', padding: '0 8px 8px' },
 }
 
 const fmtK = (n) => {
@@ -43,10 +43,12 @@ const laborRateLabel = (cat) => {
   return `$${r.floor}–$${r.ceiling}/hr`
 }
 
+const TAG_ORDER = ['Operational Efficiency', 'Revenue Intelligence', 'Financial Clarity']
+
 export default function PrintSummary({ output, company, niche, nicheLabel, tasks }) {
   if (!output) return null
 
-  const { pricing, roi, phase1 } = output
+  const { roi, phase1 } = output
   const tr = roi.roiAvailable ? roi.calculationTrace : null
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
@@ -58,6 +60,12 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
   const phase1Label = `${formatCurrency(phase1.floor)} – ${formatCurrency(phase1.ceiling)}`
   const capabilities = CAPABILITIES[niche] || CAPABILITIES.other
 
+  const capsByTag = {}
+  TAG_ORDER.forEach(tag => {
+    const filtered = capabilities.filter(c => c.tag === tag)
+    if (filtered.length > 0) capsByTag[tag] = filtered
+  })
+
   return (
     <div className="print-only" style={{ fontFamily: 'DM Sans, sans-serif', color: '#1C1C1C', maxWidth: 680, margin: '0 auto', padding: '32px 24px' }}>
 
@@ -67,7 +75,7 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
           <div style={{ fontFamily: 'DM Serif Display, serif', fontSize: 20, fontWeight: 400, color: '#2D5E3A' }}>Somerset Systems</div>
           <div style={{ fontSize: 12, color: '#5A5A5A', marginTop: 2 }}>Operational Opportunity Assessment</div>
         </div>
-        <img src="/somerset-logo.png" alt="Somerset Systems" style={{ height: 44, opacity: 0.85 }} onError={(e) => { e.target.style.display = 'none' }} />
+        <img src="/somerset-icon.png" alt="Somerset Systems" style={{ height: 44, opacity: 0.85 }} onError={(e) => { e.target.style.display = 'none' }} />
       </div>
 
       {/* Section A — Company Snapshot */}
@@ -89,7 +97,7 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
       {checkedTasks.length > 0 && (
         <div style={s.card}>
           <div style={s.sectionTitle}>Where Your Team Is Losing Time</div>
-          {[['High', highTasks, '#2D5E3A'], ['Medium', mediumTasks, '#1C1C1C'], ['Low', lowTasks, '#888888']].map(([lvl, group, color]) =>
+          {[['High', highTasks, '#2D5E3A'], ['Medium', mediumTasks, '#1C1C1C'], ['Low', lowTasks, '#666666']].map(([lvl, group, color]) =>
             group.length === 0 ? null : (
               <div key={lvl} style={{ marginBottom: 10 }}>
                 <div style={{ fontSize: 10, fontWeight: 600, color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>{lvl} Impact</div>
@@ -106,13 +114,12 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
       )}
 
       {/* Section C — Where We See Opportunity */}
-      <div style={s.card} className="page-break-before">
+      <div style={{ ...s.card, pageBreakBefore: 'always', breakBefore: 'page' }}>
         <div style={s.sectionTitle}>Where We See Opportunity</div>
         {!roi.roiAvailable ? (
           <p style={s.muted}>No impact data. Select tasks in Step 3 to see estimated impact.</p>
         ) : (
           <>
-            {/* Bucket 1: Operational Capacity */}
             {roi.operationalAvailable && (
               <>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#1C1C1C', marginBottom: 6 }}>
@@ -120,7 +127,7 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
                 </div>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, marginBottom: 8 }}>
                   <thead>
-                    <tr style={{ background: '#F0F4F1' }}>
+                    <tr style={{ background: 'var(--bg-active)' }}>
                       <th style={{ padding: '4px 6px', textAlign: 'left', color: '#5A5A5A', fontWeight: 500 }}>Task</th>
                       <th style={{ padding: '4px 6px', textAlign: 'center', color: '#5A5A5A', fontWeight: 500 }}>Staff</th>
                       <th style={{ padding: '4px 6px', textAlign: 'center', color: '#5A5A5A', fontWeight: 500 }}>Eff. Hrs/wk</th>
@@ -131,27 +138,25 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
                   </thead>
                   <tbody>
                     {tr.operationalTasks.map((t, i) => (
-                      <>
-                        <tr key={t.id} style={{ background: i % 2 === 0 ? '#fff' : '#FAFAFA', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                          <td style={{ padding: '4px 6px', color: '#3D3D3D' }}>
-                            {t.label}
-                            <div style={{ fontSize: 9, color: '#888888', fontStyle: 'italic', marginTop: 1 }}>
-                              {t.rawHours} hrs/wk raw × {t.efficiencyFactor} efficiency = {Math.round(t.effectiveHours * 10) / 10} hrs automatable — {efficiencyLabel(t.efficiencyFactor)}
-                            </div>
-                          </td>
-                          <td style={{ padding: '4px 6px', textAlign: 'center', color: '#5A5A5A' }}>{t.people}</td>
-                          <td style={{ padding: '4px 6px', textAlign: 'center', color: '#5A5A5A', fontFamily: 'ui-monospace, Consolas, monospace' }}>
-                            {Math.round(t.scaledHours * 10) / 10}
-                          </td>
-                          <td style={{ padding: '4px 6px', textAlign: 'center', color: '#5A5A5A' }}>{laborCategoryLabel[t.laborCategory] || t.laborCategory}</td>
-                          <td style={{ padding: '4px 6px', textAlign: 'center', color: '#5A5A5A', whiteSpace: 'nowrap' }}>{laborRateLabel(t.laborCategory)}</td>
-                          <td style={{ padding: '4px 6px', textAlign: 'right', color: '#1C1C1C', fontFamily: 'ui-monospace, Consolas, monospace', whiteSpace: 'nowrap' }}>
-                            {formatCurrency(t.annualFloor)} – {formatCurrency(t.annualCeiling)}
-                          </td>
-                        </tr>
-                      </>
+                      <tr key={t.id} style={{ background: i % 2 === 0 ? '#fff' : 'var(--bg-raised)', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                        <td style={{ padding: '4px 6px', color: '#3D3D3D' }}>
+                          {t.label}
+                          <div style={{ fontSize: 9, color: '#666666', fontStyle: 'italic', marginTop: 1 }}>
+                            {t.rawHours} hrs/wk raw × {t.efficiencyFactor} efficiency = {Math.round(t.effectiveHours * 10) / 10} hrs automatable — {efficiencyLabel(t.efficiencyFactor)}
+                          </div>
+                        </td>
+                        <td style={{ padding: '4px 6px', textAlign: 'center', color: '#5A5A5A' }}>{t.people}</td>
+                        <td style={{ padding: '4px 6px', textAlign: 'center', color: '#5A5A5A', fontFamily: 'ui-monospace, Consolas, monospace' }}>
+                          {Math.round(t.scaledHours * 10) / 10}
+                        </td>
+                        <td style={{ padding: '4px 6px', textAlign: 'center', color: '#5A5A5A' }}>{laborCategoryLabel[t.laborCategory] || t.laborCategory}</td>
+                        <td style={{ padding: '4px 6px', textAlign: 'center', color: '#5A5A5A', whiteSpace: 'nowrap' }}>{laborRateLabel(t.laborCategory)}</td>
+                        <td style={{ padding: '4px 6px', textAlign: 'right', color: '#1C1C1C', fontFamily: 'ui-monospace, Consolas, monospace', whiteSpace: 'nowrap' }}>
+                          {formatCurrency(t.annualFloor)} – {formatCurrency(t.annualCeiling)}
+                        </td>
+                      </tr>
                     ))}
-                    <tr style={{ background: '#F0F4F1', fontWeight: 600 }}>
+                    <tr style={{ background: 'var(--bg-active)', fontWeight: 600 }}>
                       <td colSpan={2} style={{ padding: '4px 6px', color: '#1C1C1C', fontSize: 10 }}>Total{tr.isCapped ? ` (scaled to ${tr.hrCap} hrs/wk)` : ''}</td>
                       <td style={{ padding: '4px 6px', textAlign: 'center', color: '#1C1C1C', fontFamily: 'ui-monospace, Consolas, monospace' }}>{Math.round(tr.totalScaledHours * 10) / 10} hrs/wk</td>
                       <td colSpan={2} />
@@ -166,9 +171,8 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
                   Efficiency factors reflect the realistic share of each task that automation can capture. Not all time spent on a task is recoverable — human review, judgment calls, and edge cases remain part of every workflow.
                 </p>
 
-                {/* Payback */}
                 {tr.paybackFloorWeeks !== null && (
-                  <div style={{ fontSize: 11, marginBottom: 6 }}>
+                  <div style={{ fontSize: 11, marginBottom: 6, pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                     <strong>Payback window:</strong> ~{tr.paybackFloorWeeks} – {tr.paybackCeilingWeeks} weeks
                     <div style={s.formula}>
                       Phase 1 floor ({formatCurrency(tr.phase1Floor)}) ÷ weekly operational value ({formatCurrency(Math.round(tr.weeklyOperationalValue))}/wk) = {tr.paybackFloorWeeks} wks •{' '}
@@ -177,9 +181,8 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
                   </div>
                 )}
 
-                {/* Year 1 */}
                 {tr.year1NetCeiling > 0 && (
-                  <div style={{ fontSize: 11, marginBottom: 6 }}>
+                  <div style={{ fontSize: 11, marginBottom: 6, pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                     <strong>Estimated Year 1 net impact:</strong> {fmtRange(tr.year1NetFloor, tr.year1NetCeiling)}
                     <div style={s.formula}>
                       Floor: {formatCurrency(tr.operationalFloor)} − {formatCurrency(Math.round(tr.phase1Midpoint))} − ({formatCurrency(tr.monthlyMaintenance)} × 12) = {formatCurrency(Math.round(tr.year1NetFloor))}{' '}•{' '}
@@ -188,9 +191,8 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
                   </div>
                 )}
 
-                {/* Year 2 */}
                 {tr.year2NetCeiling > 0 && (
-                  <div style={{ fontSize: 11, marginBottom: 6 }}>
+                  <div style={{ fontSize: 11, marginBottom: 6, pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                     <strong>Estimated Year 2 net impact:</strong> {fmtRange(tr.year2NetFloor, tr.year2NetCeiling)}
                     <div style={s.formula}>
                       Floor: {formatCurrency(tr.operationalFloor)} − ({formatCurrency(tr.monthlyMaintenance)} × 12) = {formatCurrency(Math.round(tr.year2NetFloor))}{' '}•{' '}
@@ -201,9 +203,8 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
               </>
             )}
 
-            {/* Bucket 2: Revenue Recovery */}
             {roi.revenueRecoverySignal && (
-              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #D8D4C8' }}>
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #D8D4C8', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#1C1C1C', marginBottom: 4 }}>
                   Revenue Recovery Opportunity: {roi.revenueRecoverySignal.charAt(0).toUpperCase() + roi.revenueRecoverySignal.slice(1)} Signal
                 </div>
@@ -212,9 +213,8 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
               </div>
             )}
 
-            {/* Bucket 3: Decision Quality */}
             {roi.showDecisionQuality && (
-              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #D8D4C8' }}>
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid #D8D4C8', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#1C1C1C', marginBottom: 4 }}>Strategic Visibility Benefits</div>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
                   {roi.decisionQualityBenefits.map((b) => (
@@ -233,8 +233,8 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
         )}
       </div>
 
-      {/* Section D — Recommended Implementation Phases */}
-      <div style={s.card}>
+      {/* Section D — Recommended Implementation Phases (always starts fresh page) */}
+      <div style={{ ...s.card, pageBreakBefore: 'always', breakBefore: 'page' }}>
         <div style={s.sectionTitle}>Recommended Implementation Phases</div>
         {[
           { n: 1, title: 'Pilot & Proof', desc: 'One focused improvement to deliver fast value and build trust. We identify your single highest-impact friction point, build a targeted solution, and prove ROI before asking for full commitment.', investment: phase1Label },
@@ -247,7 +247,7 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
             <p style={s.body}>{desc}</p>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#2D5E3A', marginTop: 4 }}>Estimated investment: {investment}</div>
             {investmentNote && (
-              <div style={{ fontSize: 10, color: '#888888', fontStyle: 'italic', marginTop: 2 }}>{investmentNote}</div>
+              <div style={{ fontSize: 10, color: '#666666', fontStyle: 'italic', marginTop: 2 }}>{investmentNote}</div>
             )}
           </div>
         ))}
@@ -259,47 +259,61 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
       {/* Section D.5 — What We Can Build For You */}
       <div style={s.card}>
         <div style={s.sectionTitle}>What We Can Build For You</div>
-        <p style={{ ...s.body, marginBottom: 10 }}>
+        <p style={{ ...s.body, marginBottom: 12 }}>
           Every engagement is scoped around your specific needs. Below are the capabilities we deliver.
         </p>
-        {capabilities.map((cap) => (
-          <div key={cap.title} style={{ marginBottom: 8, paddingBottom: 8, borderBottom: '1px solid #D8D4C8', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#1C1C1C', marginBottom: 2 }}>
-              {cap.title}{' '}
-              <span style={{ fontSize: 10, fontWeight: 400, color: '#5A5A5A' }}>({cap.tag})</span>
+
+        {TAG_ORDER.map(tag => {
+          const caps = capsByTag[tag]
+          if (!caps) return null
+          return (
+            <div key={tag} style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#666666', marginBottom: 5, paddingBottom: 4, borderBottom: '1px solid #D8D4C8' }}>
+                {tag}
+              </div>
+              {caps.map((cap) => (
+                <div key={cap.title} style={{ marginBottom: 6, paddingBottom: 6, borderBottom: '1px solid #E8E8E4', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#1C1C1C', marginBottom: 2 }}>
+                    {cap.title}
+                  </div>
+                  <p style={{ ...s.body, fontSize: 11, lineHeight: 1.5 }}>{cap.description}</p>
+                </div>
+              ))}
             </div>
-            <p style={{ ...s.body, fontSize: 11 }}>{cap.description}</p>
-          </div>
-        ))}
-        <p style={s.muted}>We build on top of your existing software. All capabilities connect directly to the tools you already use. Your Phase 1 pilot addresses one or two of these. A full engagement can include any combination.</p>
+          )
+        })}
+
+        <p style={{ ...s.muted, textAlign: 'center', marginTop: 4 }}>
+          We build on top of your existing software. All capabilities connect directly to the tools you already use. Your Phase 1 pilot addresses one or two of these. A full engagement can include any combination.
+        </p>
       </div>
 
       {/* Section E — Why This Fits */}
       <div style={s.card}>
         <div style={s.sectionTitle}>Why This Fits Your Business</div>
-        <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', marginBottom: 14 }}>
           {[
-            'Connects directly to your existing tools and software',
-            'Nothing in your current workflow gets replaced or disrupted',
-            'Built exclusively around your operations, not a generic template',
-            'Designed to expand, with new automations and integrations as you grow',
-          ].map((pt) => (
-            <li key={pt} style={{ fontSize: 12, color: '#3D3D3D', display: 'flex', gap: 6, marginBottom: 5 }}>
-              <span style={{ color: '#2D5E3A', flexShrink: 0 }}>→</span>
-              {pt}
-            </li>
+            { label: 'Connects to your stack', desc: "Integrates directly with whatever tools you're already running — no replacements." },
+            { label: 'Nothing disrupted', desc: 'Your existing workflows stay intact. We build capability on top.' },
+            { label: 'Built only for you', desc: 'Every build is scoped around your specific operations, not a template.' },
+            { label: 'Grows with you', desc: 'Phase 1 infrastructure is designed to expand as your priorities evolve.' },
+          ].map(pt => (
+            <div key={pt.label} style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#1C1C1C', marginBottom: 2 }}>{pt.label}</div>
+              <div style={{ fontSize: 11, color: '#3D3D3D', lineHeight: 1.5 }}>{pt.desc}</div>
+            </div>
           ))}
-        </ul>
+        </div>
         <div style={s.divider}>
           <div style={{ fontSize: 13, fontWeight: 600, color: '#1C1C1C', marginBottom: 5 }}>Where This Can Go</div>
-          <p style={s.body}>
+          <p style={{ ...s.body, fontSize: 11 }}>
             Every engagement starts focused, one or two improvements, proven fast. But the infrastructure we build in Phase 1 is designed to grow. If you want it, a full operational layer is possible: one place where all your tools agree on the numbers that matter: revenue, utilization, capacity, margin, and pipeline.
           </p>
         </div>
       </div>
 
       {/* Footer */}
-      <div style={{ marginTop: 32, paddingTop: 14, borderTop: '1px solid #D8D4C8', fontSize: 11, color: '#888888', display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ marginTop: 32, paddingTop: 14, borderTop: '1px solid #D8D4C8', fontSize: 11, color: '#666666', display: 'flex', justifyContent: 'space-between' }}>
         <span>Prepared by Somerset Systems</span>
         <span>somersetsystems.co</span>
       </div>

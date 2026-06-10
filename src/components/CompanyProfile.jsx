@@ -20,7 +20,7 @@ function FieldLabel({ htmlFor, children }) {
     <label
       htmlFor={htmlFor}
       className="block mb-1.5"
-      style={{ font: '500 13px DM Sans', color: '#2D5E3A' }}
+      style={{ font: '500 13px DM Sans', color: 'var(--brand-green)' }}
     >
       {children}
     </label>
@@ -41,14 +41,14 @@ function NumberInput({ id, value, onChange, placeholder }) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full"
+      className="w-full input-field"
       style={{
         border: '1.5px solid var(--border)',
-        borderRadius: 6,
+        borderRadius: 5,
         padding: '10px 14px',
         font: '400 15px DM Sans',
         color: 'var(--text-heading)',
-        background: '#fff',
+        background: 'var(--bg-card)',
         outline: 'none',
       }}
     />
@@ -87,7 +87,7 @@ export default function CompanyProfile({ company, niche, onChange, onBack, onCon
 
   const pillBase = {
     border: '1.5px solid var(--border)',
-    borderRadius: 6,
+    borderRadius: 5,
     padding: '10px 16px',
     font: '500 14px DM Sans',
     cursor: 'pointer',
@@ -97,11 +97,11 @@ export default function CompanyProfile({ company, niche, onChange, onBack, onCon
   return (
     <div
       className="rounded-lg p-8"
-      style={{ background: 'var(--bg-card)', boxShadow: '0 2px 12px rgba(45,94,58,0.08)' }}
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
     >
       <h2
         className="text-2xl mb-2"
-        style={{ fontFamily: "'DM Serif Display', serif", color: 'var(--text-heading)', fontWeight: 400 }}
+        style={{ fontFamily: "'DM Serif Display', serif", color: 'var(--text-heading)', fontWeight: 400, textWrap: 'balance' }}
       >
         Company Profile
       </h2>
@@ -110,8 +110,10 @@ export default function CompanyProfile({ company, niche, onChange, onBack, onCon
       </p>
 
       {/* Revenue range */}
-      <div className="mb-5">
-        <FieldLabel>Annual revenue</FieldLabel>
+      <fieldset className="mb-5" style={{ border: 0, padding: 0, minInlineSize: 0 }}>
+        <legend style={{ font: '500 13px DM Sans', color: 'var(--brand-green)', marginBottom: 6, display: 'block', width: '100%', lineHeight: 1.4, padding: 0 }}>
+          Annual revenue
+        </legend>
         <div className="flex flex-wrap gap-2">
           {REVENUE_OPTIONS.map((opt) => {
             const isSelected = company.revenueRange === opt.value
@@ -119,12 +121,13 @@ export default function CompanyProfile({ company, niche, onChange, onBack, onCon
               <button
                 key={opt.value}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => handleChange('revenueRange', opt.value)}
                 style={{
                   ...pillBase,
-                  background: isSelected ? '#2D5E3A' : '#fff',
-                  borderColor: isSelected ? '#2D5E3A' : 'var(--border)',
-                  color: isSelected ? '#fff' : 'var(--text-body)',
+                  background: isSelected ? 'var(--brand-green)' : 'var(--bg-card)',
+                  borderColor: isSelected ? 'var(--brand-green)' : 'var(--border)',
+                  color: isSelected ? 'var(--bg-card)' : 'var(--text-body)',
                 }}
               >
                 {opt.label}
@@ -133,7 +136,7 @@ export default function CompanyProfile({ company, niche, onChange, onBack, onCon
           })}
         </div>
         <FieldError message={errors.revenueRange} />
-      </div>
+      </fieldset>
 
       {/* Employees */}
       <div className="mb-5">
@@ -160,8 +163,10 @@ export default function CompanyProfile({ company, niche, onChange, onBack, onCon
       </div>
 
       {/* Owner-operated */}
-      <div className="mb-5">
-        <FieldLabel>Owner-operated?</FieldLabel>
+      <fieldset className="mb-5" style={{ border: 0, padding: 0, minInlineSize: 0 }}>
+        <legend style={{ font: '500 13px DM Sans', color: 'var(--brand-green)', marginBottom: 6, display: 'block', width: '100%', lineHeight: 1.4, padding: 0 }}>
+          Owner-operated?
+        </legend>
         <div className="flex gap-3">
           {[{ value: true, label: 'Yes' }, { value: false, label: 'No' }].map((opt) => {
             const isSelected = company.ownerOperated === opt.value
@@ -169,12 +174,13 @@ export default function CompanyProfile({ company, niche, onChange, onBack, onCon
               <button
                 key={String(opt.value)}
                 type="button"
+                aria-pressed={isSelected}
                 onClick={() => handleChange('ownerOperated', opt.value)}
                 style={{
                   ...pillBase,
-                  background: isSelected ? '#2D5E3A' : '#fff',
-                  borderColor: isSelected ? '#2D5E3A' : 'var(--border)',
-                  color: isSelected ? '#fff' : 'var(--text-body)',
+                  background: isSelected ? 'var(--brand-green)' : 'var(--bg-card)',
+                  borderColor: isSelected ? 'var(--brand-green)' : 'var(--border)',
+                  color: isSelected ? 'var(--bg-card)' : 'var(--text-body)',
                   minWidth: 80,
                 }}
               >
@@ -184,46 +190,49 @@ export default function CompanyProfile({ company, niche, onChange, onBack, onCon
           })}
         </div>
         <FieldError message={errors.ownerOperated} />
-      </div>
+      </fieldset>
 
       {/* Years in business (optional) */}
-      <div className="mb-2">
-        <FieldLabel htmlFor="yearsInBusiness">
+      <fieldset className="mb-2" style={{ border: 0, padding: 0, minInlineSize: 0 }}>
+        <legend style={{ font: '500 13px DM Sans', color: 'var(--brand-green)', marginBottom: 6, display: 'block', width: '100%', lineHeight: 1.4, padding: 0 }}>
           Years in business <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(Optional)</span>
-        </FieldLabel>
-        <select
-          id="yearsInBusiness"
-          value={company.yearsInBusiness}
-          onChange={(e) => handleChange('yearsInBusiness', e.target.value)}
-          style={{
-            border: '1.5px solid var(--border)',
-            borderRadius: 6,
-            padding: '10px 14px',
-            font: '400 15px DM Sans',
-            color: company.yearsInBusiness ? 'var(--text-heading)' : 'var(--text-muted)',
-            background: '#fff',
-            outline: 'none',
-            width: '100%',
-            cursor: 'pointer',
-          }}
-        >
-          <option value="">Select…</option>
-          {YEARS_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
-      </div>
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {YEARS_OPTIONS.map((opt) => {
+            const isSelected = company.yearsInBusiness === opt.value
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => handleChange('yearsInBusiness', isSelected ? '' : opt.value)}
+                style={{
+                  ...pillBase,
+                  background: isSelected ? 'var(--brand-green)' : 'var(--bg-card)',
+                  borderColor: isSelected ? 'var(--brand-green)' : 'var(--border)',
+                  color: isSelected ? 'var(--bg-card)' : 'var(--text-body)',
+                }}
+              >
+                {opt.label}
+              </button>
+            )
+          })}
+        </div>
+      </fieldset>
 
       <div className="mt-8 flex justify-between">
         <button
+          type="button"
           onClick={onBack}
-          style={{ color: '#2D5E3A', border: '1.5px solid #2D5E3A', background: 'transparent', padding: '12px 28px', borderRadius: 6, cursor: 'pointer', font: '500 15px DM Sans' }}
+          className="btn-secondary"
+          style={{ color: 'var(--text-body)', border: '1.5px solid var(--border)', background: 'transparent', padding: '12px 28px', borderRadius: 5, cursor: 'pointer', font: '500 15px DM Sans' }}
         >
           Back
         </button>
         <button
           onClick={handleContinue}
-          style={{ background: '#2D5E3A', color: '#fff', border: 'none', padding: '12px 28px', borderRadius: 6, cursor: 'pointer', font: '500 15px DM Sans' }}
+          className="btn-primary"
+          style={{ background: 'var(--brand-green)', color: 'var(--bg-card)', border: 'none', padding: '12px 28px', borderRadius: 5, cursor: 'pointer', font: '500 15px DM Sans' }}
         >
           Continue
         </button>

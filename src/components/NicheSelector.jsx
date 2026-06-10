@@ -1,13 +1,6 @@
 import { useState } from 'react'
 import { NICHES } from '../data/niches.js'
 
-const NICHE_ICONS = {
-  hvac: '🔧',
-  electrical: '⚡',
-  legal: '⚖️',
-  other: '🏢',
-}
-
 export default function NicheSelector({ niche, nicheLabel, onSelect, onContinue }) {
   const [otherText, setOtherText] = useState(nicheLabel && niche === 'other' ? nicheLabel : '')
 
@@ -30,14 +23,14 @@ export default function NicheSelector({ niche, nicheLabel, onSelect, onContinue 
   return (
     <div
       className="rounded-lg p-8"
-      style={{ background: 'var(--bg-card)', boxShadow: '0 2px 12px rgba(45,94,58,0.08)' }}
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
     >
-      <h1
+      <h2
         className="text-2xl mb-2"
-        style={{ fontFamily: "'DM Serif Display', serif", color: 'var(--text-heading)', fontWeight: 400 }}
+        style={{ fontFamily: "'DM Serif Display', serif", color: 'var(--text-heading)', fontWeight: 400, textWrap: 'balance' }}
       >
         What type of business do you own?
-      </h1>
+      </h2>
       <p className="mb-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
         Select the option that best describes your business. This helps us tailor the assessment to your industry.
       </p>
@@ -49,16 +42,16 @@ export default function NicheSelector({ niche, nicheLabel, onSelect, onContinue 
             <button
               key={n.id}
               type="button"
+              aria-pressed={isSelected}
               onClick={() => handleCardClick(n.id)}
-              className="text-left p-5 rounded-lg transition-colors"
+              className="text-left p-5 transition-colors"
               style={{
-                background: isSelected ? '#F0F4F1' : 'var(--bg-card)',
-                border: isSelected ? '1.5px solid #2D5E3A' : '1.5px solid var(--border)',
-                borderLeft: isSelected ? '4px solid #2D5E3A' : '1.5px solid var(--border)',
+                borderRadius: 5,
+                background: isSelected ? 'var(--bg-active)' : 'var(--bg-card)',
+                border: isSelected ? '1.5px solid var(--brand-green)' : '1.5px solid var(--border)',
                 cursor: 'pointer',
               }}
             >
-              <div className="text-2xl mb-2">{NICHE_ICONS[n.id]}</div>
               <div
                 className="text-lg mb-1"
                 style={{ fontFamily: "'DM Serif Display', serif", color: 'var(--text-heading)', fontWeight: 400 }}
@@ -88,10 +81,10 @@ export default function NicheSelector({ niche, nicheLabel, onSelect, onContinue 
             value={otherText}
             onChange={handleOtherInput}
             placeholder="e.g. Plumbing Contractor, Accounting Firm…"
-            className="w-full"
+            className="w-full input-field"
             style={{
               border: '1.5px solid var(--border)',
-              borderRadius: 6,
+              borderRadius: 5,
               padding: '10px 14px',
               font: '400 15px DM Sans',
               color: 'var(--text-heading)',
@@ -106,12 +99,13 @@ export default function NicheSelector({ niche, nicheLabel, onSelect, onContinue 
         <button
           onClick={onContinue}
           disabled={!canContinue}
+          className={canContinue ? 'btn-primary' : ''}
           style={{
-            background: canContinue ? '#2D5E3A' : '#D1D5DB',
-            color: '#fff',
+            background: canContinue ? 'var(--brand-green)' : '#D1D5DB',
+            color: 'var(--bg-card)',
             border: 'none',
             padding: '12px 28px',
-            borderRadius: 6,
+            borderRadius: 5,
             cursor: canContinue ? 'pointer' : 'not-allowed',
             font: '500 15px DM Sans',
           }}

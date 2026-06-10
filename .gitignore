@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Tool-internal scratch dirs
+.claude/worktrees/
+.impeccable/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

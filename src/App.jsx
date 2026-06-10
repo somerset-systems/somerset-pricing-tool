@@ -104,40 +104,34 @@ export default function App() {
 
   return (
     <>
+    <style>{`
+      .btn-primary { transition: background 0.12s; }
+      .btn-primary:hover { background: var(--brand-green-lt) !important; }
+      .btn-secondary { transition: background 0.12s; }
+      .btn-secondary:hover { background: var(--bg-active) !important; }
+      .freq-btn-inactive { transition: border-color 0.1s, color 0.1s; }
+      .freq-btn-inactive:hover { border-color: var(--brand-green) !important; color: var(--brand-green) !important; }
+      .input-field:focus, .select-field:focus {
+        border-color: var(--brand-green) !important;
+        box-shadow: 0 0 0 3px rgba(45, 94, 58, 0.12) !important;
+        outline: none !important;
+      }
+    `}</style>
     <div className="no-print min-h-screen" style={{ background: 'var(--bg-page)' }}>
       <div className="mx-auto px-6 pt-8 pb-8" style={{ maxWidth: 720 }}>
 
         {/* Persistent header */}
         <div
-          className="flex items-center gap-3 pb-6 mb-6"
+          className="flex items-center gap-4 pb-6 mb-6"
           style={{ borderBottom: '1px solid #D8D4C8' }}
         >
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 8,
-              background: '#2D5E3A',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              color: '#fff',
-              fontSize: 14,
-              fontWeight: 700,
-              fontFamily: 'DM Sans, sans-serif',
-              letterSpacing: '0.02em',
-            }}
-          >
-            SS
-          </div>
-          <div>
-            <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 20, fontWeight: 400, color: '#2D5E3A', lineHeight: 1.2 }}>
-              Somerset Systems
-            </div>
-            <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, color: '#5A5A5A', marginTop: 2 }}>
-              Operational Opportunity Assessment
-            </div>
+          <img
+            src="/somerset-logo-horizontal.png"
+            alt="Somerset Systems"
+            style={{ height: 48, flexShrink: 0, objectFit: 'contain' }}
+          />
+          <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, color: 'var(--text-secondary)', paddingLeft: 16, borderLeft: '1px solid #D8D4C8' }}>
+            Operational Opportunity Assessment
           </div>
         </div>
 

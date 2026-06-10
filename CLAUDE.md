@@ -385,3 +385,27 @@ All inputs/rates/derived values stored in `roi.calculationTrace` for dropdown di
 - Do not put any math in a component file
 - Do not add a circumstance/context step — it was removed intentionally
 - Do not show pricing floor/ceiling or salesperson adjustment to the client
+
+---
+
+## Brand Assets
+
+All Somerset Systems brand files live at `C:\Users\tommy\LogoFIles\`. Read the Brand Guidelines PDF before making any brand or design decisions — it is the authoritative source for logo usage rules, color values, typography, and spacing.
+
+| Asset | Path |
+|---|---|
+| **Brand Guidelines PDF** | `C:\Users\tommy\LogoFIles\Brand Guidelines\Brand Guidelines.pdf` |
+| Logo SVG (primary, use this in code) | `C:\Users\tommy\LogoFIles\Source & Vector File\Somerset Systems.svg` |
+| All logo PNGs (14 variants) | `C:\Users\tommy\LogoFIles\PNG Files\` |
+| Horizontal lockup PNG (nav/header) | `C:\Users\tommy\LogoFIles\PNG Files\Somerset-Systems-5.png` |
+| Stacked lockup PNG (hero/cover) | `C:\Users\tommy\LogoFIles\PNG Files\Somerset-Systems-1.png` |
+| White lockup PNG (dark backgrounds) | `C:\Users\tommy\LogoFIles\PNG Files\Somerset-Systems-14.png` |
+| Icon only PNG (green, avatars/small UI) | `C:\Users\tommy\LogoFIles\PNG Files\Somerset-Systems-9.png` |
+| Favicon folder (copy to `public/`) | `C:\Users\tommy\LogoFIles\Favicon\` |
+| Social media kit | `C:\Users\tommy\LogoFIles\Social Media Kit\` |
+| 3D renders (mockups, hero images) | `C:\Users\tommy\LogoFIles\3D Render\` |
+| Adobe Illustrator source | `C:\Users\tommy\LogoFIles\Source & Vector File\Somerset Systems.ai` |
+
+**Note:** `public/somerset-logo.png` is a placeholder. Replace it by copying `Somerset Systems.svg` into `public/` and updating any `<img src="/somerset-logo.png">` references to `<img src="/Somerset Systems.svg" alt="Somerset Systems" />`. Copy the entire `Favicon\` folder contents into `public/` for browser tab icons.
+
+When making any brand, color, or typography decision, read the Brand Guidelines PDF first. It overrides any design assumptions.
