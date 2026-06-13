@@ -1,10 +1,9 @@
 import { useState, useRef } from 'react'
-import { deriveTaskHours } from '../utils/calculations.js'
 
 const IMPACT_STYLE = {
   High:   { background: 'var(--brand-green)', color: 'var(--bg-card)' },
   Medium: { background: 'var(--text-heading)', color: 'var(--bg-card)' },
-  Low:    { background: 'var(--text-muted)', color: 'var(--bg-card)' },
+  Low:    { background: 'var(--badge-low)', color: 'var(--bg-card)' },
 }
 
 const IMPACT_ORDER = { High: 0, Medium: 1, Low: 2 }
@@ -26,7 +25,9 @@ const FREQ_TOOLTIPS = {
 const inputStyle = {
   border: '1.5px solid var(--border)',
   borderRadius: 5,
-  padding: '5px 8px',
+  padding: '8px',
+  minHeight: 40,
+  boxSizing: 'border-box',
   font: '400 14px DM Sans',
   color: 'var(--text-heading)',
   background: 'var(--bg-card)',
@@ -187,12 +188,12 @@ export default function TaskAudit({
       className="rounded-lg p-8"
       style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
     >
-      <h2
+      <h1
         className="text-2xl mb-2"
         style={{ fontFamily: "'DM Serif Display', serif", color: 'var(--text-heading)', fontWeight: 400, textWrap: 'balance' }}
       >
         Where Is Your Team Losing Time?
-      </h2>
+      </h1>
       <p className="mb-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
         Check each area where your team manually handles work. Enter how many staff are involved and how often.
       </p>
@@ -259,7 +260,9 @@ export default function TaskAudit({
                       minWidth: 0,
                       border: '1.5px solid var(--border)',
                       borderRadius: 5,
-                      padding: '6px 10px',
+                      padding: '8px 10px',
+                      minHeight: 40,
+                      boxSizing: 'border-box',
                       font: '400 14px DM Sans',
                       color: 'var(--text-heading)',
                       background: 'var(--bg-card)',
@@ -277,8 +280,8 @@ export default function TaskAudit({
                       fontSize: 18,
                       lineHeight: 1,
                       padding: 0,
-                      minWidth: 36,
-                      minHeight: 36,
+                      minWidth: 40,
+                      minHeight: 40,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -299,7 +302,8 @@ export default function TaskAudit({
                     style={{
                       border: '1.5px solid var(--border)',
                       borderRadius: 5,
-                      padding: '5px 8px',
+                      padding: '8px',
+                      minHeight: 40,
                       font: '400 13px DM Sans',
                       color: 'var(--text-heading)',
                       background: 'var(--bg-card)',
@@ -320,7 +324,8 @@ export default function TaskAudit({
                     style={{
                       border: '1.5px solid var(--border)',
                       borderRadius: 5,
-                      padding: '5px 8px',
+                      padding: '8px',
+                      minHeight: 40,
                       font: '400 13px DM Sans',
                       color: 'var(--text-heading)',
                       background: 'var(--bg-card)',

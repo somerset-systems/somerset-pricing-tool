@@ -27,23 +27,33 @@ function FieldLabel({ htmlFor, children }) {
   )
 }
 
-function FieldError({ message }) {
+function FieldError({ message, id }) {
   if (!message) return null
-  return <p className="mt-1 text-xs" style={{ color: 'var(--error)' }}>{message}</p>
+  return <p id={id} className="mt-1 text-xs" style={{ color: 'var(--error)' }}>{message}</p>
 }
 
-function NumberInput({ id, value, onChange, placeholder }) {
+function NumberInput({ id, value, onChange, placeholder, max = 2000, hasError, describedBy }) {
+  function handleChange(e) {
+    const raw = e.target.value
+    if (raw === '') return onChange('')
+    // Clamp out typos like 99999 that would distort the ROI cap; keep the field sane.
+    const n = Math.min(Math.max(0, Math.floor(Number(raw) || 0)), max)
+    onChange(String(n))
+  }
   return (
     <input
       id={id}
       type="number"
       min="0"
+      max={max}
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={handleChange}
       placeholder={placeholder}
+      aria-invalid={hasError || undefined}
+      aria-describedby={describedBy}
       className="w-full input-field"
       style={{
-        border: '1.5px solid var(--border)',
+        border: `1.5px solid ${hasError ? 'var(--error)' : 'var(--border)'}`,
         borderRadius: 5,
         padding: '10px 14px',
         font: '400 15px DM Sans',
@@ -99,12 +109,12 @@ export default function CompanyProfile({ company, niche, onChange, onBack, onCon
       className="rounded-lg p-8"
       style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
     >
-      <h2
+      <h1
         className="text-2xl mb-2"
         style={{ fontFamily: "'DM Serif Display', serif", color: 'var(--text-heading)', fontWeight: 400, textWrap: 'balance' }}
       >
         Company Profile
-      </h2>
+      </h1>
       <p className="mb-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
         This information shapes the context for your operational assessment.
       </p>
@@ -146,8 +156,10 @@ export default function CompanyProfile({ company, niche, onChange, onBack, onCon
           value={company.employees}
           onChange={(v) => handleChange('employees', v)}
           placeholder="e.g. 12"
+          hasError={!!errors.employees}
+          describedBy={errors.employees ? 'employees-error' : undefined}
         />
-        <FieldError message={errors.employees} />
+        <FieldError id="employees-error" message={errors.employees} />
       </div>
 
       {/* Billable / field staff */}
@@ -158,8 +170,10 @@ export default function CompanyProfile({ company, niche, onChange, onBack, onCon
           value={company.billableStaff}
           onChange={(v) => handleChange('billableStaff', v)}
           placeholder="e.g. 6"
+          hasError={!!errors.billableStaff}
+          describedBy={errors.billableStaff ? 'billableStaff-error' : undefined}
         />
-        <FieldError message={errors.billableStaff} />
+        <FieldError id="billableStaff-error" message={errors.billableStaff} />
       </div>
 
       {/* Owner-operated */}

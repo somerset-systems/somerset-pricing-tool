@@ -25,12 +25,12 @@ export default function NicheSelector({ niche, nicheLabel, onSelect, onContinue 
       className="rounded-lg p-8"
       style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
     >
-      <h2
+      <h1
         className="text-2xl mb-2"
         style={{ fontFamily: "'DM Serif Display', serif", color: 'var(--text-heading)', fontWeight: 400, textWrap: 'balance' }}
       >
         What type of business do you own?
-      </h2>
+      </h1>
       <p className="mb-6 text-sm" style={{ color: 'var(--text-secondary)' }}>
         Select the option that best describes your business. This helps us tailor the assessment to your industry.
       </p>

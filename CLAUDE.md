@@ -22,7 +22,7 @@ The output page (Step 4) is designed for screenshare legibility: larger headings
 - Tailwind CSS (utility-first, configured via tailwind.config.js)
 - No component libraries — build everything from scratch
 - No backend, no API calls, no authentication
-- All state lives in React (useState / useReducer) — no localStorage, no external state
+- All state lives in React (useState / useReducer). The in-progress session is mirrored to `localStorage` (key `somerset-pricing-tool-v1`) so an accidental refresh or tab switch mid-call doesn't wipe the salesperson's prep. This is client-side only — no server, no external state. A "Start over" control clears it.
 - Print/share via window.print() with a dedicated print stylesheet
 
 ---
@@ -363,7 +363,7 @@ All inputs/rates/derived values stored in `roi.calculationTrace` for dropdown di
 
 1. **No black-box outputs.** Every number on the output screen must show its formula or trace.
 2. **No AI calls.** Entirely deterministic. No fetch to any API.
-3. **No localStorage.** State resets on page load.
+3. **localStorage is session-mirror only.** The working session is persisted to `localStorage` so a refresh mid-call survives; it holds no secrets and is cleared by "Start over". Never use it for anything beyond restoring in-progress wizard state.
 4. **All calculations in calculations.js only.** No math in components.
 5. **All state mutations in App.jsx only.**
 6. **Every input must have a label.**

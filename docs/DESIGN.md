@@ -20,7 +20,7 @@ The tool should feel like something a serious company built — not an AI demo.
   --text-heading:     #1C1C1C;
   --text-body:        #3D3D3D;
   --text-secondary:   #5A5A5A;
-  --text-muted:       #888888;
+  --text-muted:       #666666;
   --border:           #D8D4C8;
   --error:            #C0392B;
   --success:          #2D5E3A;
@@ -35,14 +35,14 @@ The tool should feel like something a serious company built — not an AI demo.
 - `#1C0F00` (dark brown heading) → `#1C1C1C`
 - `#3D2010` (brown body) → `#3D3D3D`
 - `#7A5C45` (secondary brown) → `#5A5A5A`
-- `#A8907C` (muted brown) → `#888888`
+- `#A8907C` (muted brown) → `#666666`
 - `#E8DDD5` (border) → `#D8D4C8`
 - `#FFF7F2` (light orange tint) → `#F0F4F1`
 
 **Impact badge colors:**
 - High: background `#2D5E3A`, white text
 - Medium: background `#1C1C1C`, white text
-- Low: background `#888888`, white text
+- Low: background `#666666`, white text
 
 **Fonts (Google Fonts — load via @import in index.css):**
 - Headings: `DM Serif Display` (weight 400) — authoritative, editorial

@@ -15,13 +15,20 @@
   --bg-subtle:        #F7F7F4;
   --error:            #C0392B;
   --success:          #2D5E3A;
-  --font-mono:        'DM Mono', ui-monospace, Consolas, monospace;
+  --badge-low:        #6E6E6E;
+  --font-mono:        ui-monospace, Consolas, monospace;
 }
 
 body {
   font-family: 'DM Sans', sans-serif;
   background: var(--bg-page);
   color: var(--text-body);
+}
+
+/* Placeholder text held to the same contrast floor as body copy (≥4.5:1 on white). */
+input::placeholder {
+  color: #6E6E6E;
+  opacity: 1;
 }
 
 /* Hide print-only content on screen */
@@ -82,7 +89,8 @@ body {
   z-index: 100;
   pointer-events: none;
 }
-.freq-btn-wrapper:hover .freq-btn-tooltip {
+.freq-btn-wrapper:hover .freq-btn-tooltip,
+.freq-btn-wrapper:focus-within .freq-btn-tooltip {
   display: block;
 }
 

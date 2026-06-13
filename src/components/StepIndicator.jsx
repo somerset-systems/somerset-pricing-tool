@@ -1,16 +1,17 @@
 const STEPS = [
-  { number: 1, label: 'Niche' },
+  { number: 1, label: 'Industry' },
   { number: 2, label: 'Company' },
-  { number: 3, label: 'Friction' },
+  { number: 3, label: 'Operations' },
   { number: 4, label: 'Assessment' },
 ]
 
-export default function StepIndicator({ currentStep }) {
+export default function StepIndicator({ currentStep, onStepClick }) {
   return (
     <nav aria-label="Progress" className="flex items-center justify-center mb-10">
       {STEPS.map((step, idx) => {
         const isCompleted = step.number < currentStep
         const isActive = step.number === currentStep
+        const isNavigable = isCompleted && typeof onStepClick === 'function'
 
         const BASE_CIRCLE = { width: 28, height: 28, borderRadius: '50%', flexShrink: 0 }
         let circleStyle = {}
@@ -25,12 +26,19 @@ export default function StepIndicator({ currentStep }) {
 
         const lineColor = isCompleted ? 'var(--brand-green)' : 'var(--border)'
 
+        const StepTag = isNavigable ? 'button' : 'div'
+        const stepProps = isNavigable
+          ? {
+              type: 'button',
+              onClick: () => onStepClick(step.number),
+              'aria-label': `Go back to step ${step.number}: ${step.label}`,
+              style: { background: 'none', border: 'none', padding: 0, cursor: 'pointer' },
+            }
+          : { 'aria-current': isActive ? 'step' : undefined }
+
         return (
           <div key={step.number} className="flex items-center">
-            <div
-              className="flex flex-col items-center"
-              aria-current={isActive ? 'step' : undefined}
-            >
+            <StepTag className="flex flex-col items-center" {...stepProps}>
               <div
                 className="flex items-center justify-center text-sm font-medium"
                 style={circleStyle}
@@ -43,9 +51,9 @@ export default function StepIndicator({ currentStep }) {
                 style={{ color: isActive ? 'var(--brand-green)' : isCompleted ? 'var(--text-heading)' : 'var(--text-muted)', fontSize: 11, display: 'block' }}
               >
                 {step.label}
-                {isCompleted && <span className="sr-only"> (completed)</span>}
+                {isCompleted && <span className="sr-only"> (completed, click to return)</span>}
               </span>
-            </div>
+            </StepTag>
 
             {idx < STEPS.length - 1 && (
               <div

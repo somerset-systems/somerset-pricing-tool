@@ -96,7 +96,7 @@ export function calculateHrCap(employees) {
   return n <= 10 ? 25 : 25 + ((n - 10) * 2)
 }
 
-const TENURE_NOTE = 'Adjusted for company tenure — established businesses typically carry a large base of lapsed maintenance clients representing meaningful re-engagement opportunity.'
+const TENURE_NOTE = 'Adjusted for company tenure: established businesses typically carry a large base of lapsed maintenance clients representing meaningful re-engagement opportunity.'
 
 // Three-bucket ROI calculation.
 // tasks: combined array of built-in (all) + custom tasks (all with included:true)
@@ -252,7 +252,7 @@ export function calculateROI({ tasks, monthlyMaintenance, phase1, employees, yea
     roiAvailable: true,
     isCapped,
     cappingNote: isCapped
-      ? `Hours scaled to ${hrCap} hrs/week — conservative ceiling based on your team size of ${numEmployees} employees. This reflects realistic automation coverage: a new system doesn't instantly capture 100% of available time savings. Formula: ${capFormula}.`
+      ? `Hours scaled to ${hrCap} hrs/week, a conservative ceiling based on your team size of ${numEmployees} employees. This reflects realistic automation coverage: a new system doesn't instantly capture 100% of available time savings. Formula: ${capFormula}.`
       : null,
     operationalAvailable: operationalTasks.length > 0,
     operationalFloor,
