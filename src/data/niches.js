@@ -43,6 +43,7 @@ const HVAC_ELECTRICAL_CAPABILITIES = [
   { title: 'Lead Source Attribution',              tag: 'Financial Clarity',      description: 'Track which marketing channels, referral sources, and campaigns are actually producing closed jobs and revenue, not just calls.' },
   { title: 'AI Operations Assistant',              tag: 'Operational Efficiency', description: 'Ask plain-English questions about your business: which jobs are overdue, which clients haven\'t been contacted, what your margin was last month. Get instant answers from your live data.' },
   { title: 'Weekly Report Automation',             tag: 'Operational Efficiency', description: 'Automatically compile and deliver your weekly operational summary, pulling from your live data so no one has to manually build it.' },
+  { title: 'Research Center',                      tag: 'Revenue Intelligence',   description: 'Automated monitoring of regulatory shifts, equipment recalls, and rebate or incentive changes, each tied to a specific account and a concrete dollar opportunity or compliance exposure so your team can act before the window closes.' },
 ]
 
 const LEGAL_CAPABILITIES = [
@@ -56,7 +57,59 @@ const LEGAL_CAPABILITIES = [
   { title: 'Client Follow-Up Automation',      tag: 'Revenue Intelligence',   description: 'Automatically surface clients who haven\'t been contacted recently, outstanding document requests, and upcoming renewal or filing deadlines.' },
   { title: 'Cross-System Reporting',           tag: 'Financial Clarity',      description: 'Reconcile your practice management software and accounting platform into one source of truth for revenue, receivables, and matter profitability.' },
   { title: 'AI Operations Assistant',          tag: 'Operational Efficiency', description: 'Ask plain-English questions about your caseload: which matters are behind, what is due this week, which clients have outstanding balances. Get instant answers from your live data.' },
+  { title: 'Research Center',                  tag: 'Revenue Intelligence',   description: 'Automated monitoring of court rule, statutory, and compliance changes, each tied to a specific matter or client and a concrete opportunity or exposure so nothing surfaces too late to act on.' },
 ]
+
+// Industry Intelligence / Research Center.
+// Deliberately QUALITATIVE — framed as revenue opportunity and risk reduction,
+// NOT recovered labor hours. Owners spend almost no time here today, which is
+// exactly the gap. Never assigned a dollar figure or added to the financial
+// projections; it sits alongside Revenue Recovery as a qualitative signal.
+const INDUSTRY_INTELLIGENCE_HVAC = {
+  badge: 'Revenue + Risk',
+  headline: 'Industry changes you can act on before they pass you by',
+  intro: 'Regulatory shifts, equipment recalls, rebate and incentive changes, and refrigerant-compliance rules each create both an obligation and a sales opportunity tied to your own accounts. Most owners have no system tracking these, so they surface late, or not at all.',
+  items: [
+    'Refrigerant and EPA compliance changes (e.g. R-410A phase-down, A2L transition) that create replacement and retrofit opportunities across your install base',
+    'Manufacturer equipment recalls and safety notices tied to units you have already installed',
+    'Rebate, tax-credit, and utility-incentive changes you can surface to the right customers while they still qualify',
+    'Local code and licensing changes that affect how you bid, what you install, and what you are liable for',
+  ],
+  closing: 'The research center monitors these automatically and ties each one to a specific account and a dollar opportunity or compliance exposure, so your team can act in time rather than finding out after the window closes.',
+}
+
+const INDUSTRY_INTELLIGENCE_LEGAL = {
+  badge: 'Revenue + Risk',
+  headline: 'Rule and regulatory changes you can act on before they affect a matter',
+  intro: 'Changes to court rules, filing requirements, statutes, and compliance obligations each create both risk and client-outreach opportunities. Most firms have no system surfacing these against their actual caseload, so they are caught reactively.',
+  items: [
+    'Court rule and filing-procedure changes that affect active matters and deadlines',
+    'Statutory and regulatory changes relevant to your practice areas and existing clients',
+    'Bar compliance, CLE, and licensing deadline changes that carry exposure if missed',
+    'Developments that create a reason to proactively re-engage past or dormant clients',
+  ],
+  closing: 'The research center monitors these automatically and ties each one to a specific matter or client and a concrete opportunity or compliance exposure, so nothing surfaces too late to act on.',
+}
+
+const INDUSTRY_INTELLIGENCE_GENERIC = {
+  badge: 'Revenue + Risk',
+  headline: 'Industry changes you can act on before your competitors do',
+  intro: 'Regulatory changes, recalls, and incentive or rebate changes each create both an obligation and a sales opportunity tied to your own accounts. Most owners have no system tracking these, so they surface late, or not at all.',
+  items: [
+    'Regulatory and compliance changes relevant to your industry and existing customers',
+    'Product recalls and safety notices tied to what you have already sold or installed',
+    'Rebate, tax-credit, and incentive changes you can surface to the right customers while they still qualify',
+    'Licensing and code changes that affect how you operate and what you are liable for',
+  ],
+  closing: 'The research center monitors these automatically and ties each one to a specific account and a dollar opportunity or compliance exposure, so your team can act in time.',
+}
+
+export const INDUSTRY_INTELLIGENCE = {
+  hvac:       INDUSTRY_INTELLIGENCE_HVAC,
+  electrical: INDUSTRY_INTELLIGENCE_HVAC,
+  legal:      INDUSTRY_INTELLIGENCE_LEGAL,
+  other:      INDUSTRY_INTELLIGENCE_GENERIC,
+}
 
 export const NICHES = [
   { id: 'hvac',       label: 'HVAC Contractor',                    description: 'Heating, ventilation, and air conditioning services',  staffLabel: 'Number of field technicians' },

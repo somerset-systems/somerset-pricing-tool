@@ -1,5 +1,5 @@
 import { formatCurrency, deriveTaskHours, LABOR_RATES } from '../utils/calculations.js'
-import { CAPABILITIES } from '../data/niches.js'
+import { CAPABILITIES, INDUSTRY_INTELLIGENCE } from '../data/niches.js'
 
 const REVENUE_LABELS = {
   '<2m': 'Under $2M', '2-5m': '$2M–$5M', '5-10m': '$5M–$10M', '10m+': '$10M+',
@@ -45,20 +45,24 @@ const laborRateLabel = (cat) => {
 
 const TAG_ORDER = ['Operational Efficiency', 'Revenue Intelligence', 'Financial Clarity']
 
-export default function PrintSummary({ output, company, niche, nicheLabel, tasks }) {
+export default function PrintSummary({ output, company, niche, nicheLabel, tasks, selectedCapabilities = [] }) {
   if (!output) return null
 
   const { roi, phase1 } = output
+  const selectedCapSet = new Set(selectedCapabilities)
   const tr = roi.roiAvailable ? roi.calculationTrace : null
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 
-  const checkedTasks = (tasks || []).filter((t) => t.included)
+  // Impact tiers derived from dollar value (same as the on-screen output).
+  const impactOf = (t) => (tr && tr.taskImpactById && tr.taskImpactById[t.id]) || t.impact
+  const checkedTasks = (tasks || []).filter((t) => t.included).map((t) => ({ ...t, impact: impactOf(t) }))
   const highTasks   = checkedTasks.filter((t) => t.impact === 'High')
   const mediumTasks = checkedTasks.filter((t) => t.impact === 'Medium')
   const lowTasks    = checkedTasks.filter((t) => t.impact === 'Low')
 
   const phase1Label = `${formatCurrency(phase1.floor)} – ${formatCurrency(phase1.ceiling)}`
   const capabilities = CAPABILITIES[niche] || CAPABILITIES.other
+  const intel = INDUSTRY_INTELLIGENCE[niche] || INDUSTRY_INTELLIGENCE.other
 
   const capsByTag = {}
   TAG_ORDER.forEach(tag => {
@@ -85,7 +89,7 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
           <div><div style={s.label}>Industry</div><div style={s.value}>{nicheLabel}</div></div>
           <div><div style={s.label}>Annual Revenue</div><div style={s.value}>{REVENUE_LABELS[company.revenueRange] || '—'}</div></div>
           <div><div style={s.label}>Team Size</div><div style={s.value}>{company.employees ? `${company.employees} employees` : '—'}</div></div>
-          <div><div style={s.label}>Integration</div><div style={s.value}>We connect directly to your existing tools, whatever you're already running.</div></div>
+          <div><div style={s.label}>Integration</div><div style={s.value}>Built to work alongside the tools you already use.</div></div>
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>Prepared {today}</div>
         <p style={{ ...s.muted, marginTop: 8 }}>
@@ -97,6 +101,9 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
       {checkedTasks.length > 0 && (
         <div style={s.card}>
           <h2 style={s.sectionTitle}>Where Your Team Is Losing Time</h2>
+          <p style={{ ...s.muted, marginBottom: 8 }}>
+            Hours are totals across all staff on each task (staff × hours per person). Impact is graded by the annual dollar value each area represents.
+          </p>
           {[['High', highTasks, 'var(--brand-green)'], ['Medium', mediumTasks, 'var(--text-heading)'], ['Low', lowTasks, 'var(--text-muted)']].map(([lvl, group, color]) =>
             group.length === 0 ? null : (
               <div key={lvl} style={{ marginBottom: 10 }}>
@@ -104,7 +111,7 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
                 {group.map((t) => (
                   <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--text-body)', padding: '4px 0', borderBottom: '1px solid var(--border)', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                     <span>{t.label || '(unnamed task)'}</span>
-                    <span style={{ fontWeight: 600, flexShrink: 0, marginLeft: 8 }}>{deriveTaskHours(t)} hrs/wk</span>
+                    <span style={{ fontWeight: 600, flexShrink: 0, marginLeft: 8 }}>{deriveTaskHours(t)} hrs/wk total</span>
                   </div>
                 ))}
               </div>
@@ -226,8 +233,28 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
               </div>
             )}
 
+            {intel && (
+              <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-heading)', marginBottom: 4 }}>
+                  Industry Intelligence — Research Center ({intel.badge})
+                </div>
+                <p style={{ ...s.body, marginBottom: 4 }}>{intel.intro}</p>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                  {intel.items.map((item) => (
+                    <li key={item} style={{ fontSize: 11, color: 'var(--text-body)', display: 'flex', gap: 6, marginBottom: 3, lineHeight: 1.5 }}>
+                      <span style={{ color: 'var(--brand-green)', flexShrink: 0 }}>→</span>{item}
+                    </li>
+                  ))}
+                </ul>
+                <p style={{ ...s.body, marginTop: 4 }}>{intel.closing}</p>
+                <p style={{ ...s.muted, marginTop: 4 }}>
+                  Framed as revenue opportunity and risk reduction, not hours saved. Assessed qualitatively and not included in the financial projections.
+                </p>
+              </div>
+            )}
+
             <p style={{ ...s.muted, marginTop: 10, fontSize: 10 }}>
-              Conservative fully-loaded labor cost ranges used: admin ($25–$35/hr), operations ($35–$60/hr). Estimates reflect potential value, not guaranteed outcomes.
+              Conservative fully-loaded labor cost ranges used: admin ($25–$35/hr), operations ($35–$60/hr). Effective hours are team totals reduced by each task's efficiency factor. Estimates reflect potential value, not guaranteed outcomes. Revenue recovery and industry intelligence are qualitative and excluded from the financial projections.
             </p>
           </>
         )}
@@ -237,7 +264,7 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
       <div style={{ ...s.card, pageBreakBefore: 'always', breakBefore: 'page' }}>
         <h2 style={s.sectionTitle}>Recommended Implementation Phases</h2>
         {[
-          { n: 1, title: 'Pilot & Proof', desc: 'One focused improvement to deliver fast value and build trust. We identify your single highest-impact friction point, build a targeted solution, and prove ROI before asking for full commitment.', investment: phase1Label },
+          { n: 1, title: 'Pilot & Proof', desc: 'One focused improvement to deliver fast value and build trust. We identify your single highest-impact friction point, build a targeted solution, and prove ROI before asking for full commitment.', investment: phase1Label, investmentNote: phase1.selectedCount > 0 ? `Scope: ${selectedCapabilities.join(', ')}. ${phase1.positioningTrace}` : 'Full range for a company this size; Phase 1 scope to be finalized.' },
           { n: 2, title: 'Operational Intelligence Layer', desc: 'A full operational engagement scoped around your specific priorities. Any capability from the list below: cross-system reporting, AI-assisted insights, workflow automations, margin analysis, capacity forecasting, or any combination that addresses your most important pain points. Scoped and priced after Phase 1 proves the foundation.', investment: 'Scoped after Phase 1, based on your specific needs and priorities.' },
           { n: 3, title: 'Ongoing Optimization', desc: 'Monthly maintenance, new automations, additional integrations, and AI improvements as your business grows. Your system evolves with you.', investment: tr ? `~${formatCurrency(tr.monthlyMaintenance)}/month` : 'Typically 10% of Phase 1 investment per month', investmentNote: tr ? tr.phase1MaintenanceTrace : undefined },
         ].map(({ n, title, desc, investment, investmentNote }) => (
@@ -271,20 +298,24 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
               <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: 5, paddingBottom: 4, borderBottom: '1px solid var(--border)' }}>
                 {tag}
               </div>
-              {caps.map((cap) => (
-                <div key={cap.title} style={{ marginBottom: 6, paddingBottom: 6, borderBottom: '1px solid #E8E8E4', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-heading)', marginBottom: 2 }}>
-                    {cap.title}
+              {caps.map((cap) => {
+                const selected = selectedCapSet.has(cap.title)
+                return (
+                  <div key={cap.title} style={{ marginBottom: 6, paddingBottom: 6, paddingLeft: selected ? 8 : 0, borderLeft: selected ? '3px solid var(--brand-green)' : 'none', borderBottom: '1px solid #E8E8E4', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-heading)' }}>{cap.title}</span>
+                      {selected && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--brand-green)', flexShrink: 0 }}>IN PHASE 1</span>}
+                    </div>
+                    <p style={{ ...s.body, fontSize: 11, lineHeight: 1.5 }}>{cap.description}</p>
                   </div>
-                  <p style={{ ...s.body, fontSize: 11, lineHeight: 1.5 }}>{cap.description}</p>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )
         })}
 
         <p style={{ ...s.muted, textAlign: 'center', marginTop: 4 }}>
-          We build on top of your existing software. All capabilities connect directly to the tools you already use. Your Phase 1 pilot addresses one or two of these. A full engagement can include any combination.
+          We build on top of your existing software. All capabilities are built to work alongside the tools you already use. Your Phase 1 pilot addresses one or two of these. A full engagement can include any combination.
         </p>
       </div>
 
@@ -293,7 +324,7 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
         <h2 style={s.sectionTitle}>Why This Fits Your Business</h2>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', marginBottom: 14 }}>
           {[
-            { label: 'Connects to your stack', desc: "Integrates directly with whatever tools you're already running. No replacements." },
+            { label: 'Works alongside your stack', desc: "Built to work alongside whatever tools you're already running. No replacements." },
             { label: 'Nothing disrupted', desc: 'Your existing workflows stay intact. We build capability on top.' },
             { label: 'Built only for you', desc: 'Every build is scoped around your specific operations, not a template.' },
             { label: 'Grows with you', desc: 'Phase 1 infrastructure is designed to expand as your priorities evolve.' },

@@ -1,6 +1,6 @@
 import { useState, Fragment } from 'react'
 import { formatCurrency, deriveTaskHours, LABOR_RATES } from '../utils/calculations.js'
-import { CAPABILITIES } from '../data/niches.js'
+import { CAPABILITIES, INDUSTRY_INTELLIGENCE } from '../data/niches.js'
 
 const REVENUE_LABELS = {
   '<2m': 'Under $2M', '2-5m': '$2M–$5M', '5-10m': '$5M–$10M', '10m+': '$10M+',
@@ -157,7 +157,7 @@ function ImpactGroup({ label, tasks, accentColor }) {
             <span style={{ color: 'var(--text-body)' }}>{t.label || '(unnamed task)'}</span>
           </div>
           <span className="font-medium" style={{ color: 'var(--text-secondary)', flexShrink: 0, marginLeft: 8 }}>
-            {deriveTaskHours(t)} hrs/wk
+            {deriveTaskHours(t)} hrs/wk total
           </span>
         </div>
       ))}
@@ -259,7 +259,7 @@ function TraceRow({ label, value, isOpen, onToggle, children, bg }) {
   )
 }
 
-export default function OutputPanel({ output, company, niche, nicheLabel, tasks, onBack, onPrint }) {
+export default function OutputPanel({ output, company, niche, nicheLabel, tasks, selectedCapabilities = [], onToggleCapability, onBack, onPrint }) {
   const [open, setOpen] = useState({})
   const [openTaskCalc, setOpenTaskCalc] = useState(null)
   const toggle = (key) => setOpen((prev) => ({ ...prev, [key]: !prev[key] }))
@@ -276,13 +276,19 @@ export default function OutputPanel({ output, company, niche, nicheLabel, tasks,
   const { roi, phase1 } = output
   const tr = roi.roiAvailable ? roi.calculationTrace : null
 
-  const checkedTasks = tasks.filter((t) => t.included)
+  // Impact tiers are DERIVED FROM each task's annual dollar value (computed in
+  // calculations.js) so this page ranks items the same way the opportunity
+  // section does. Fall back to the task's seed impact only if no ROI is available.
+  const impactOf = (t) => (tr && tr.taskImpactById && tr.taskImpactById[t.id]) || t.impact
+  const checkedTasks = tasks.filter((t) => t.included).map((t) => ({ ...t, impact: impactOf(t) }))
   const highTasks    = checkedTasks.filter((t) => t.impact === 'High')
   const mediumTasks  = checkedTasks.filter((t) => t.impact === 'Medium')
   const lowTasks     = checkedTasks.filter((t) => t.impact === 'Low')
 
   const phase1Label = `${formatCurrency(phase1.floor)} – ${formatCurrency(phase1.ceiling)}`
   const capabilities = CAPABILITIES[niche] || CAPABILITIES.other
+  const intel = INDUSTRY_INTELLIGENCE[niche] || INDUSTRY_INTELLIGENCE.other
+  const selectedCapSet = new Set(selectedCapabilities)
 
   const highlightedCaps = new Set()
   tasks.forEach((t) => {
@@ -307,7 +313,7 @@ export default function OutputPanel({ output, company, niche, nicheLabel, tasks,
   })
 
   const whyPoints = [
-    { label: 'Connects to your stack', desc: "Integrates directly with whatever tools you're already running. No replacements, no migrations." },
+    { label: 'Works alongside your stack', desc: "Built to work alongside the tools you're already running. No replacements, no migrations." },
     { label: 'Nothing disrupted', desc: "Your existing workflows stay intact. We build capability on top without displacing what works." },
     { label: 'Built only for you', desc: 'Every build is scoped around your specific operations, not a packaged template or off-the-shelf product.' },
     { label: 'Grows with you', desc: 'The infrastructure built in Phase 1 is designed to expand as your priorities and team evolve.' },
@@ -361,7 +367,7 @@ export default function OutputPanel({ output, company, niche, nicheLabel, tasks,
           </div>
           <div>
             <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>Integration</span>
-            <div style={{ color: 'var(--text-body)', fontSize: 13, marginTop: 2 }}>We connect directly to your existing tools, whatever you're already running.</div>
+            <div style={{ color: 'var(--text-body)', fontSize: 13, marginTop: 2 }}>Built to work alongside the tools you already use.</div>
           </div>
         </div>
         <p style={{ fontSize: 13, fontStyle: 'italic', color: 'var(--text-secondary)', borderTop: '1px solid var(--border)', paddingTop: 10, margin: 0 }}>
@@ -378,6 +384,10 @@ export default function OutputPanel({ output, company, niche, nicheLabel, tasks,
           <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No friction areas selected. Go back to Step 3 to check tasks.</p>
         ) : (
           <>
+            <p className="text-xs mb-4" style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>
+              Hours shown are <strong>total across all staff</strong> on each task (staff count × hours per person), not per person.
+              Impact is graded by the annual dollar value each area represents, so the ranking here matches the opportunity figures below.
+            </p>
             <ImpactGroup label="High"   tasks={highTasks}   accentColor="var(--brand-green)" />
             <ImpactGroup label="Medium" tasks={mediumTasks} accentColor="var(--text-heading)" />
             <ImpactGroup label="Low"    tasks={lowTasks}    accentColor="var(--text-muted)" />
@@ -502,7 +512,7 @@ export default function OutputPanel({ output, company, niche, nicheLabel, tasks,
                 </table>
                 </div>
                 <p className="text-xs italic mt-3" style={{ color: 'var(--text-muted)' }}>
-                  These ranges use conservative fully-loaded labor costs for admin ($25–$35/hr) and operations/management ($35–$60/hr) staff. Actual impact depends on current compensation, adoption, and workflow design.
+                  Effective hrs/wk are <strong>team totals</strong> (staff × hours per person), reduced by each task's efficiency factor to reflect the share automation can realistically capture. These ranges use conservative fully-loaded labor costs for admin ($25–$35/hr) and operations/management ($35–$60/hr) staff. Actual impact depends on current compensation, adoption, and workflow design.
                 </p>
                 {tr.isCapped && (
                   <div className="mt-3 rounded px-3 py-2 text-xs" style={{ background: 'var(--bg-active)', border: '1px solid var(--border)', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
@@ -565,6 +575,36 @@ export default function OutputPanel({ output, company, niche, nicheLabel, tasks,
               </div>
             )}
 
+            {intel && (
+              <SubsectionBlock
+                sectionLabel="Industry Intelligence — Research Center"
+                headline={
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <span style={{ background: 'var(--brand-green)', color: '#fff', padding: '2px 10px', borderRadius: 4, fontSize: 12, fontWeight: 600 }}>
+                      {intel.badge}
+                    </span>
+                    <span>{intel.headline}</span>
+                  </span>
+                }
+                isOpen={!!open.intel}
+                onToggle={() => toggle('intel')}
+              >
+                <p className="text-sm mb-3" style={{ color: 'var(--text-body)', lineHeight: 1.6 }}>{intel.intro}</p>
+                <ul className="flex flex-col gap-1 mb-3">
+                  {intel.items.map((item) => (
+                    <li key={item} className="flex items-start gap-2 text-sm" style={{ color: 'var(--text-body)' }}>
+                      <span aria-hidden="true" style={{ color: 'var(--brand-green)', flexShrink: 0, marginTop: 1 }}>→</span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-sm mb-2" style={{ color: 'var(--text-body)', lineHeight: 1.6 }}>{intel.closing}</p>
+                <p className="text-xs italic" style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  This is framed as revenue opportunity and risk reduction, not hours saved. Owners spend almost no time tracking this today, which is exactly the gap, so we don't assign it a dollar figure or include it in the projections below.
+                </p>
+              </SubsectionBlock>
+            )}
+
             {roi.operationalAvailable && tr.paybackFloorWeeks !== null && (
               <>
                 <TraceRow
@@ -616,7 +656,7 @@ export default function OutputPanel({ output, company, niche, nicheLabel, tasks,
             )}
 
             <p className="text-xs italic" style={{ color: 'var(--text-muted)', lineHeight: 1.6, borderTop: '1px solid var(--border)', paddingTop: 16, marginTop: 8 }}>
-              Estimates reflect potential value, not guaranteed outcomes. Actual results depend on software access, team adoption, workflow design, and current operational baseline. Revenue recovery impact is assessed qualitatively and not included in financial projections. Efficiency factors reflect the realistic share of each task that automation can capture. Not all time spent on a task is recoverable; human review, judgment calls, and edge cases remain part of every workflow.
+              Estimates reflect potential value, not guaranteed outcomes. Actual results depend on software access, team adoption, workflow design, and current operational baseline. Revenue recovery and industry intelligence are assessed qualitatively and are not included in the financial projections. Efficiency factors reflect the realistic share of each task that automation can capture. Not all time spent on a task is recoverable; human review, judgment calls, and edge cases remain part of every workflow.
             </p>
           </>
         )}
@@ -641,10 +681,71 @@ export default function OutputPanel({ output, company, niche, nicheLabel, tasks,
               One focused improvement to deliver fast value and build trust. We identify your single highest-impact friction point, build a targeted solution, and prove ROI before asking for full commitment.
             </p>
             <div style={{ borderTop: '1px solid rgba(45,94,58,0.18)', paddingTop: 16, marginTop: 16 }}>
-              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>Estimated Phase 1 investment</div>
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 6 }}>
+                {phase1.selectedCount > 0
+                  ? `Estimated Phase 1 investment — based on the ${phase1.selectedCount} ${phase1.selectedCount === 1 ? 'capability' : 'capabilities'} selected below`
+                  : 'Estimated Phase 1 investment'}
+              </div>
               <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 26, fontWeight: 400, color: 'var(--brand-green)', lineHeight: 1.1 }}>
                 {phase1Label}
               </div>
+
+              {phase1.noScopeSelected && (
+                <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6, marginTop: 10, marginBottom: 0 }}>
+                  This is the full range for a company your size. <strong>Select one or two capabilities below</strong> to scope your Phase 1 pilot and tighten the estimate.
+                </p>
+              )}
+
+              {phase1.exceedsPilot && (
+                <div className="rounded px-3 py-2 mt-3" style={{ background: 'rgba(255,255,255,0.6)', border: '1px solid rgba(45,94,58,0.25)', fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                  You've selected {phase1.selectedCount} capabilities. Phase 1 is designed as a focused 1–2 capability pilot, so the estimate is held at the top of your range. A scope this broad is often better delivered as a full Phase 2 engagement.
+                </div>
+              )}
+
+              {!phase1.noScopeSelected && (
+                <div style={{ marginTop: 14 }}>
+                  <button
+                    type="button"
+                    onClick={() => toggle('phase1pos')}
+                    aria-expanded={!!open.phase1pos}
+                    className="no-print"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--brand-green)', font: '500 12px DM Sans' }}
+                  >
+                    How this range is set <ChevronIcon isOpen={!!open.phase1pos} size={13} />
+                  </button>
+                  {open.phase1pos && (
+                    <div className="rounded mt-2" style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid var(--border)', padding: '12px 14px' }}>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 8 }}>
+                        Two layers, both from fixed config: your <strong>revenue band</strong> sets the range, your selected <strong>scope</strong> positions the quote inside it.
+                      </div>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginBottom: 8 }}>
+                        <tbody>
+                          <tr style={{ borderBottom: '1px solid var(--border)' }}>
+                            <td style={{ padding: '4px 6px', color: 'var(--text-secondary)' }}>Revenue band ({REVENUE_LABELS[company.revenueRange]})</td>
+                            <td style={{ padding: '4px 6px', textAlign: 'right', fontFamily: 'var(--font-mono)', color: 'var(--text-heading)' }}>
+                              {formatCurrency(phase1.bandFloor)} – {formatCurrency(phase1.bandCeiling)}
+                            </td>
+                          </tr>
+                          {phase1.scope.map((c) => (
+                            <tr key={c.title} style={{ borderBottom: '1px solid var(--border)' }}>
+                              <td style={{ padding: '4px 6px', color: 'var(--text-secondary)' }}>{c.title}</td>
+                              <td style={{ padding: '4px 6px', textAlign: 'right', fontFamily: 'var(--font-mono)', color: 'var(--text-heading)' }}>effort {c.weight}</td>
+                            </tr>
+                          ))}
+                          <tr style={{ fontWeight: 600 }}>
+                            <td style={{ padding: '4px 6px', color: 'var(--text-heading)' }}>Total effort</td>
+                            <td style={{ padding: '4px 6px', textAlign: 'right', fontFamily: 'var(--font-mono)', color: 'var(--text-heading)' }}>{phase1.effortSum}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <div style={{ fontSize: 11, color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', lineHeight: 1.7 }}>
+                        Position in band = {Math.round(phase1.position * 100)}% → quoted {formatCurrency(phase1.floor)} – {formatCurrency(phase1.ceiling)}.<br />
+                        Internal midpoint {formatCurrency(phase1.midpoint)} (drives payback, net impact, and Phase 3 maintenance below).
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -700,9 +801,16 @@ export default function OutputPanel({ output, company, niche, nicheLabel, tasks,
       {/* Section D.5 — What We Can Build For You */}
       <SectionCard id="sec-capabilities" style={{ borderTop: '1px solid var(--border)' }}>
         <SectionTitle>What We Can Build For You</SectionTitle>
-        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: -12, marginBottom: 20 }}>
-          Every engagement is scoped around your specific needs. Below are the capabilities we deliver.
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: -12, marginBottom: 16 }}>
+          Every engagement is scoped around your specific needs. <strong>Check the one or two capabilities</strong> you'd start with — your Phase 1 estimate above updates to match the scope you pick.
         </p>
+        {selectedCapSet.size > 0 && (
+          <div className="rounded-md mb-4" style={{ background: 'var(--bg-active)', border: '1px solid var(--brand-green)', padding: '10px 14px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--brand-green)' }}>In your Phase 1 pilot:</span>
+            <span style={{ fontSize: 12, color: 'var(--text-body)' }}>{selectedCapabilities.join(' · ')}</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 'auto', fontFamily: 'var(--font-mono)' }}>{phase1Label}</span>
+          </div>
+        )}
 
         {TAG_ORDER.map(tag => {
           const caps = capsByTag[tag]
@@ -716,34 +824,46 @@ export default function OutputPanel({ output, company, niche, nicheLabel, tasks,
                 {tag}
               </div>
 
-              {/* Recommended items — full-width featured rows */}
-              {highlighted.map(cap => (
-                <div
-                  key={cap.title}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    gap: 12,
-                    padding: '10px 14px',
-                    marginBottom: 4,
-                    background: 'var(--bg-active)',
-                    borderRadius: 5,
-                  }}
-                >
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 14, fontWeight: 400, color: 'var(--text-heading)', marginBottom: 3 }}>
-                      {cap.title}
+              {/* Recommended items — full-width featured rows, selectable */}
+              {highlighted.map(cap => {
+                const selected = selectedCapSet.has(cap.title)
+                return (
+                  <label
+                    key={cap.title}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      gap: 12,
+                      padding: '10px 14px',
+                      marginBottom: 4,
+                      background: 'var(--bg-active)',
+                      border: selected ? '1.5px solid var(--brand-green)' : '1.5px solid transparent',
+                      borderRadius: 5,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() => onToggleCapability(cap.title)}
+                      style={{ marginTop: 3, width: 16, height: 16, flexShrink: 0, accentColor: 'var(--brand-green)', cursor: 'pointer' }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                        <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 14, fontWeight: 400, color: 'var(--text-heading)' }}>
+                          {cap.title}
+                        </span>
+                        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--brand-green)', flexShrink: 0, marginTop: 2 }}>
+                          {selected ? 'In Phase 1' : 'Recommended'}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.45, margin: '3px 0 0' }}>
+                        {cap.description}
+                      </p>
                     </div>
-                    <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.45, margin: 0 }}>
-                      {cap.description}
-                    </p>
-                  </div>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--brand-green)', flexShrink: 0, marginTop: 2 }}>
-                    Recommended
-                  </span>
-                </div>
-              ))}
+                  </label>
+                )
+              })}
 
               {/* Regular items — 2-col compact list, no individual card borders */}
               {regular.length > 0 && (
@@ -753,19 +873,45 @@ export default function OutputPanel({ output, company, niche, nicheLabel, tasks,
                   columnGap: 24,
                   marginTop: highlighted.length > 0 ? 6 : 0,
                 }}>
-                  {regular.map(cap => (
-                    <div
-                      key={cap.title}
-                      style={{ padding: '8px 0', borderBottom: '1px solid var(--border)' }}
-                    >
-                      <div style={{ fontFamily: "'DM Serif Display', serif", fontSize: 13, fontWeight: 400, color: 'var(--text-heading)', marginBottom: 2 }}>
-                        {cap.title}
-                      </div>
-                      <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.45, margin: 0 }}>
-                        {cap.description}
-                      </p>
-                    </div>
-                  ))}
+                  {regular.map(cap => {
+                    const selected = selectedCapSet.has(cap.title)
+                    return (
+                      <label
+                        key={cap.title}
+                        style={{
+                          display: 'flex',
+                          gap: 10,
+                          padding: '8px 0 8px 8px',
+                          borderBottom: '1px solid var(--border)',
+                          borderLeft: selected ? '3px solid var(--brand-green)' : '3px solid transparent',
+                          background: selected ? 'var(--bg-active)' : 'transparent',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => onToggleCapability(cap.title)}
+                          style={{ marginTop: 3, width: 15, height: 15, flexShrink: 0, accentColor: 'var(--brand-green)', cursor: 'pointer' }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 6 }}>
+                            <span style={{ fontFamily: "'DM Serif Display', serif", fontSize: 13, fontWeight: 400, color: 'var(--text-heading)' }}>
+                              {cap.title}
+                            </span>
+                            {selected && (
+                              <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--brand-green)', flexShrink: 0, marginTop: 1 }}>
+                                In Phase 1
+                              </span>
+                            )}
+                          </div>
+                          <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.45, margin: '2px 0 0' }}>
+                            {cap.description}
+                          </p>
+                        </div>
+                      </label>
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -773,7 +919,7 @@ export default function OutputPanel({ output, company, niche, nicheLabel, tasks,
         })}
 
         <p style={{ textAlign: 'center', fontSize: 12, fontStyle: 'italic', color: 'var(--text-muted)', marginTop: 4 }}>
-          We build on top of your existing software. All capabilities connect directly to the tools you already use. Your Phase 1 pilot addresses one or two of these. A full engagement can include any combination.
+          We build on top of your existing software. All capabilities are built to work alongside the tools you already use. Your Phase 1 pilot addresses one or two of these. A full engagement can include any combination.
         </p>
       </SectionCard>
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { TASK_LISTS } from './data/niches.js'
 import { calculatePricing, calculateROI, calculatePhase1Range, calculatePhase1Maintenance } from './utils/calculations.js'
 import StepIndicator from './components/StepIndicator.jsx'
@@ -46,7 +46,9 @@ export default function App() {
   const [company, setCompany] = useState(saved?.company ?? { ...EMPTY_COMPANY })
   const [tasks, setTasks] = useState(saved?.tasks ?? [])
   const [customTasks, setCustomTasks] = useState(saved?.customTasks ?? [])
-  const [output, setOutput] = useState(saved?.output ?? null)
+  // Capabilities the salesperson has scoped into the Phase 1 pilot. Drives the
+  // Phase 1 quoted range (scope positions the price within the revenue band).
+  const [selectedCapabilities, setSelectedCapabilities] = useState(saved?.selectedCapabilities ?? [])
 
   // Persist the working session on every change.
   useEffect(() => {
@@ -54,12 +56,12 @@ export default function App() {
     try {
       window.localStorage.setItem(
         STORAGE_KEY,
-        JSON.stringify({ currentStep, niche, nicheLabel, company, tasks, customTasks, output })
+        JSON.stringify({ currentStep, niche, nicheLabel, company, tasks, customTasks, selectedCapabilities })
       )
     } catch {
       /* storage unavailable (private mode / quota) — fall back to in-memory only */
     }
-  }, [currentStep, niche, nicheLabel, company, tasks, customTasks, output])
+  }, [currentStep, niche, nicheLabel, company, tasks, customTasks, selectedCapabilities])
 
   function handleReset() {
     if (typeof window !== 'undefined' && !window.confirm('Start a new assessment? This clears everything you\'ve entered.')) return
@@ -70,7 +72,7 @@ export default function App() {
     setCompany({ ...EMPTY_COMPANY })
     setTasks([])
     setCustomTasks([])
-    setOutput(null)
+    setSelectedCapabilities([])
   }
 
   function handleStepClick(stepNumber) {
@@ -122,21 +124,32 @@ export default function App() {
   // Custom rows the user added but never named are noise — keep them out of the math and the output.
   const namedCustomTasks = customTasks.filter((t) => t.label.trim() !== '')
 
+  // The full assessment output is DERIVED from inputs, so the Phase 1 range and
+  // every downstream figure recompute live as the salesperson toggles Phase 1
+  // capabilities on Step 4. All math stays in calculations.js.
+  const output = useMemo(() => {
+    if (!company.revenueRange) return null
+    const allTasks = [...tasks, ...customTasks.filter((t) => t.label.trim() !== '')]
+    const pricing = calculatePricing({ revenueRange: company.revenueRange })
+    const phase1 = calculatePhase1Range({ revenueRange: company.revenueRange, selectedCapabilities })
+    const phase1Maintenance = calculatePhase1Maintenance(phase1)
+    const roi = calculateROI({
+      tasks: allTasks,
+      monthlyMaintenance: phase1Maintenance,
+      phase1,
+      employees: company.employees,
+      yearsInBusiness: company.yearsInBusiness,
+    })
+    return { pricing, roi, phase1 }
+  }, [company, tasks, customTasks, selectedCapabilities])
+
+  function handleToggleCapability(title) {
+    setSelectedCapabilities((prev) =>
+      prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
+    )
+  }
+
   function handleNext() {
-    if (currentStep === 3) {
-      const allTasks = [...tasks, ...namedCustomTasks]
-      const pricing = calculatePricing({ revenueRange: company.revenueRange })
-      const phase1 = calculatePhase1Range({ revenueRange: company.revenueRange })
-      const phase1Maintenance = calculatePhase1Maintenance(phase1)
-      const roi = calculateROI({
-        tasks: allTasks,
-        monthlyMaintenance: phase1Maintenance,
-        phase1,
-        employees: company.employees,
-        yearsInBusiness: company.yearsInBusiness,
-      })
-      setOutput({ pricing, roi, phase1 })
-    }
     setCurrentStep((s) => Math.min(s + 1, 4))
   }
 
@@ -239,6 +252,8 @@ export default function App() {
             niche={niche}
             nicheLabel={nicheLabel}
             tasks={allTasksForOutput}
+            selectedCapabilities={selectedCapabilities}
+            onToggleCapability={handleToggleCapability}
             onBack={handleBack}
             onPrint={() => window.print()}
           />
@@ -247,7 +262,7 @@ export default function App() {
 
       </div>
     </div>
-    <PrintSummary output={output} company={company} niche={niche} nicheLabel={nicheLabel} tasks={allTasksForOutput} />
+    <PrintSummary output={output} company={company} niche={niche} nicheLabel={nicheLabel} tasks={allTasksForOutput} selectedCapabilities={selectedCapabilities} />
     </>
   )
 }

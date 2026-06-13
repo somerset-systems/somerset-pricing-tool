@@ -114,7 +114,7 @@ Phase 1 (Pilot & Proof) — orange highlight, investment = calculated Phase 1 ra
 Phase 2 (Intelligence Layer). Phase 3 (Ongoing Optimization).
 30-day performance guarantee copy below.
 
-**Section D.5 — What We Can Build For You** (between D and E): Niche-filtered capability cards. Each card has title, one-sentence description, and a tag (Operational Efficiency / Revenue Intelligence / Financial Clarity). No interactivity. Note at bottom: "We build on top of your existing software. All capabilities connect directly to the tools you already use. Your Phase 1 pilot addresses one or two of these. A full engagement can include any combination."
+**Section D.5 — What We Can Build For You** (between D and E): Niche-filtered capability cards. Each card has title, one-sentence description, and a tag (Operational Efficiency / Revenue Intelligence / Financial Clarity). **Each card is selectable via a checkbox** — the checked set is the Phase 1 scope (`selectedCapabilities`) and drives the Phase 1 quoted range in Section D live (see Phase 1 Pricing). Selected cards show an "In Phase 1" marker + green accent; a summary strip above the cards lists the current scope and quoted range. Note at bottom: "We build on top of your existing software. All capabilities connect directly to the tools you already use. Your Phase 1 pilot addresses one or two of these. A full engagement can include any combination."
 
 **Dynamic capability highlighting:** Cards that directly address a task the user marked as "Constantly" receive a "Recommended" label, green left border, and green-tinted background. Mapping (task ID → capability titles):
 - `scheduling` → Scheduling and Dispatch Optimization
@@ -126,7 +126,7 @@ Phase 2 (Intelligence Layer). Phase 3 (Ongoing Optimization).
 - Any custom task (id starts with `custom-`) → AI Operations Assistant
 If no tasks are marked Constantly, no cards are highlighted.
 
-HVAC/Electrical capabilities (17 cards, in order):
+HVAC/Electrical capabilities (18 cards, in order):
 1. Proposal and Work Order Automation — Operational Efficiency
 2. Scheduling and Dispatch Optimization — Operational Efficiency
 3. Automated Invoicing — Operational Efficiency
@@ -144,8 +144,9 @@ HVAC/Electrical capabilities (17 cards, in order):
 15. Lead Source Attribution — Financial Clarity
 16. AI Operations Assistant — Operational Efficiency
 17. Weekly Report Automation — Operational Efficiency
+18. Research Center — Revenue Intelligence
 
-Legal capabilities (10 cards, in order):
+Legal capabilities (11 cards, in order):
 1. Client Intake Automation — Operational Efficiency
 2. Caseload Intelligence Dashboard — Operational Efficiency
 3. Deadline and Compliance Tracker — Operational Efficiency
@@ -156,6 +157,7 @@ Legal capabilities (10 cards, in order):
 8. Client Follow-Up Automation — Revenue Intelligence
 9. Cross-System Reporting — Financial Clarity
 10. AI Operations Assistant — Operational Efficiency
+11. Research Center — Revenue Intelligence
 
 **Section E — Why This Fits Your Business**: Four bullet points + "Where This Can Go" subsection.
 
@@ -184,7 +186,8 @@ All state lives in App.jsx. Pass down via props. No Context API.
   customTasks: [],          // [{ id, label, impact:'Medium', laborCategory:'admin'|'operations'|'owner', valueBucket:'operational', efficiencyFactor:0.65, included:true, people, frequency }]
   // laborCategory on customTasks is mutable via inline select (Admin/Operations/Owner). Default: 'operations'.
   // efficiencyFactor: fraction of task time that automation can realistically capture (0–1). Comes from niches.js for built-in tasks; custom tasks default to 0.65.
-  output: null,             // { pricing, roi, phase1 }
+  selectedCapabilities: [], // capability TITLES checked for the Phase 1 build (Section D.5 cards). Positions the Phase 1 quote within the revenue band. Persisted to localStorage.
+  // output is NOT stored in state — it is a useMemo derived from the inputs above, so toggling a Phase 1 capability recomputes the whole assessment live. Shape: { pricing, roi, phase1 }.
 }
 // people: integer (default 2, minimum 1)
 // frequency: 'Occasionally'|'Regularly'|'Constantly'
@@ -265,17 +268,31 @@ owner:      $75–$150/hr (reserved for future use)
 
 No circumstance modifiers. Full-engagement maintenance fee = round(midpoint × 0.10, nearest $500) — used internally. Phase 3 card displays Phase 1-based maintenance (see Phase 1 Pricing below).
 
-### Phase 1 Pricing
-Fixed tier table — not percentage-based. Minimum spread of $1,500 enforced (already satisfied by these values, but the guard remains in code).
+### Phase 1 Pricing — TWO-LAYER MODEL (see docs/LOGIC.md for the full spec + worked examples)
+Phase 1 price is set by two transparent, config-driven layers: **revenue sets the range, scope positions within it.**
 
-| Revenue Range | Phase 1 Floor | Phase 1 Ceiling |
-|---------------|---------------|-----------------|
-| < $2M         | $2,500        | $4,000          |
-| $2–5M         | $3,500        | $6,000          |
-| $5–10M        | $5,000        | $8,500          |
-| $10M+         | $7,500        | $12,000         |
+**Layer 1 — Revenue band (ability to pay).** Editable config `PHASE1_REVENUE_BANDS`:
 
-`calculatePhase1Range` returns `{ floor, ceiling, tierKey }` where `tierKey` is the revenueRange key. The `tierKey` and tier source ("Fixed tier table") are stored in `calculationTrace`.
+| Revenue Range | Band Floor | Band Ceiling |
+|---------------|------------|--------------|
+| < $2M         | $4,000     | $6,000       |
+| $2–5M         | $5,500     | $7,500       |
+| $5–10M        | $7,000     | $9,500       |
+| $10M+         | $8,500     | $12,000      |
+
+**Layer 2 — Scope (effort).** The capabilities selected for the Phase 1 build (checkboxes on the Section D.5 cards) each carry an effort weight in `EFFORT_WEIGHTS` (light=1 / medium=2 / heavy=3; default 2; all editable). The summed effort positions the quoted range inside the band via `PHASE1_POSITIONING` (`EFFORT_FLOOR:1`, `EFFORT_CEILING:6`, `WINDOW_FRACTION:0.6`, `MAX_PILOT_CAPS:2`):
+```
+position    = clamp((effortSum − 1) / (6 − 1), 0, 1)
+windowWidth = 0.6 × (ceiling − floor)
+floor       = round250(bandFloor + position × (bandWidth − windowWidth))   // quoted, shown to prospect
+ceiling     = round250(bandFloor + position × (bandWidth − windowWidth) + windowWidth)
+midpoint    = (floor + ceiling) / 2   // internal — drives payback / net / maintenance
+```
+Low effort → near band floor; high effort → near band ceiling; never exceeds the band. >2 capabilities (or effort >6) clamps to the ceiling and sets `exceedsPilot` (UI shows a "consider Phase 2" note). With no scope selected, the full band is shown (`noScopeSelected`).
+
+The prospect is shown a **range**, never a single committed number. The internal midpoint is kept for the math only.
+
+`calculatePhase1Range({ revenueRange, selectedCapabilities })` returns `{ floor, ceiling, midpoint, tierKey, bandFloor, bandCeiling, effortSum, position, selectedCount, scope, windowWidth, exceedsPilot, noScopeSelected, positioningTrace }`. The scope/positioning fields are mirrored into `calculationTrace` (source: "Revenue band + scope positioning").
 
 ### Phase 1 Maintenance Fee (calculatePhase1Maintenance)
 Displayed in Phase 3 card. Derived from Phase 1 midpoint — NOT the full engagement midpoint.

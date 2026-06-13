@@ -1,16 +1,98 @@
+// ════════════════════════════════════════════════════════════════════════
+//  PHASE 1 PRICING CONFIG — EDIT EVERYTHING HERE
+//  This is the single source of truth for Somerset's Phase 1 price. Every
+//  downstream figure on the output page (payback window, Phase 3 monthly
+//  maintenance, Year 1 / Year 2 net impact) is derived from these values.
+//  Nothing downstream is hardcoded — change a number here and the whole
+//  assessment recalculates.
+//
+//  The price is set by TWO layers, both fully transparent:
+//    LAYER 1 — REVENUE BAND (ability to pay): the revenue tier sets the
+//              floor → ceiling range for a company that size.
+//    LAYER 2 — SCOPE (effort): the capabilities selected for the Phase 1
+//              build each carry an EFFORT WEIGHT. The sum of those weights
+//              positions the quoted range inside the revenue band — light
+//              scope sits near the floor, heavy scope near the ceiling.
+//
+//  To move the whole anchor up or down, edit PHASE1_REVENUE_BANDS.
+//  To recalibrate how complex a build is, edit EFFORT_WEIGHTS.
+//  To change how aggressively scope moves the price, edit PHASE1_POSITIONING.
+// ════════════════════════════════════════════════════════════════════════
+
+// LAYER 1 — Revenue band. Sets the floor→ceiling for a company this size.
+// "Foot in the door but not cheap": core tier sits just under a $10K anchor.
+export const PHASE1_REVENUE_BANDS = {
+  '<2m':   { floor: 4000, ceiling: 6000  },
+  '2-5m':  { floor: 5500, ceiling: 7500  },
+  '5-10m': { floor: 7000, ceiling: 9500  },
+  '10m+':  { floor: 8500, ceiling: 12000 },
+}
+
+// LAYER 2 — Effort weight per capability. light = 1, medium = 2, heavy = 3.
+// Keyed by the capability TITLE exactly as it appears in src/data/niches.js.
+// These are build-complexity estimates — edit freely as real build times land.
+// Any capability not listed here falls back to DEFAULT_EFFORT_WEIGHT.
+export const EFFORT_WEIGHTS = {
+  // ── Light (1) ──────────────────────────────────────────────────────────
+  'Automated Invoicing':                  1,
+  'Automated Invoicing and Billing':      1,
+  'Weekly Report Automation':             1,
+  // ── Medium (2) ─────────────────────────────────────────────────────────
+  'AI Owner Briefings':                   2,
+  'AI Operations Assistant':              2,
+  'Maintenance Renewal Tracker':          2,
+  'Estimate Conversion Tracking':         2,
+  'Research Center':                      2,
+  'Technician Profitability Dashboard':   2,
+  'Job Type Margin Analysis':             2,
+  'Automated Follow-Up Workflows':        2,
+  'Missed Call Recovery':                 2,
+  'Callback and Warranty Tracking':       2,
+  'Cross-System Reporting':               2,
+  'Lead Source Attribution':              2,
+  'Client Intake Automation':             2,
+  'Caseload Intelligence Dashboard':      2,
+  'Deadline and Compliance Tracker':      2,
+  'Billing Realization Tracker':          2,
+  'Client Follow-Up Automation':          2,
+  // ── Heavy (3) ──────────────────────────────────────────────────────────
+  'Proposal and Work Order Automation':   3,
+  'Job Status Tracker':                   3,
+  'Scheduling and Dispatch Optimization': 3,
+  '30/60/90 Capacity Forecast':           3,
+}
+export const DEFAULT_EFFORT_WEIGHT = 2
+
+// How scope (summed effort) positions the quote inside the revenue band.
+export const PHASE1_POSITIONING = {
+  EFFORT_FLOOR:   1,    // effort sum at/below this sits at the band FLOOR (a single light build)
+  EFFORT_CEILING: 6,    // effort sum at/above this sits at the band CEILING (two heavy builds)
+  WINDOW_FRACTION: 0.6, // the range shown to the prospect spans 60% of the band, and slides within it
+  MAX_PILOT_CAPS: 2,    // beyond this many capabilities, flag the scope as Phase-2-sized
+}
+
+// Phase 3 monthly maintenance = this fraction of the Phase 1 midpoint.
+export const MAINTENANCE_RATE = 0.10
+// ════════════════════════════════════════════════════════════════════════
+
+const REVENUE_TIER_LABELS = {
+  '<2m': 'under $2M', '2-5m': '$2–5M', '5-10m': '$5–10M', '10m+': '$10M+',
+}
+
+// Effort weight for a capability title, falling back to the default.
+export function getEffortWeight(title) {
+  return EFFORT_WEIGHTS[title] != null ? EFFORT_WEIGHTS[title] : DEFAULT_EFFORT_WEIGHT
+}
+
+function roundToNearest250(n) {
+  return Math.round(n / 250) * 250
+}
+
 export const BASE_PRICE = {
   '<2m':   { floor: 8000,  ceiling: 12000 },
   '2-5m':  { floor: 10000, ceiling: 15000 },
   '5-10m': { floor: 15000, ceiling: 22000 },
   '10m+':  { floor: 22000, ceiling: 35000 },
-}
-
-// Fixed Phase 1 tiers — not percentage-based
-const PHASE1_TIERS = {
-  '<2m':   { floor: 2500, ceiling: 4000  },
-  '2-5m':  { floor: 3500, ceiling: 6000  },
-  '5-10m': { floor: 5000, ceiling: 8500  },
-  '10m+':  { floor: 7500, ceiling: 12000 },
 }
 
 const REVENUE_MIDPOINTS = {
@@ -71,29 +153,118 @@ export function calculatePricing({ revenueRange }) {
   if (!base) return null
   const { floor, ceiling } = base
   const midpoint = (floor + ceiling) / 2
-  const monthlyMaintenance = roundToNearest500(midpoint * 0.10)
+  const monthlyMaintenance = roundToNearest500(midpoint * MAINTENANCE_RATE)
   return { floor, ceiling, midpoint, monthlyMaintenance }
 }
 
-// Phase 1 maintenance = 10% of Phase 1 midpoint, rounded to nearest $50.
+// Phase 1 maintenance = MAINTENANCE_RATE × Phase 1 midpoint, rounded to nearest $50.
 export function calculatePhase1Maintenance(phase1) {
   const midpoint = (phase1.floor + phase1.ceiling) / 2
-  return Math.round(midpoint * 0.10 / 50) * 50
+  return Math.round(midpoint * MAINTENANCE_RATE / 50) * 50
 }
 
-// Fixed Phase 1 tiers. Minimum spread of $1,500 enforced.
-export function calculatePhase1Range({ revenueRange }) {
-  const tier = PHASE1_TIERS[revenueRange]
-  if (!tier) return { floor: 2500, ceiling: 4000, tierKey: revenueRange }
-  let { floor, ceiling } = tier
-  if (ceiling - floor < 1500) ceiling = floor + 1500
-  return { floor, ceiling, tierKey: revenueRange }
+// Two-layer Phase 1 pricing.
+//   Layer 1: revenueRange selects the band [bandFloor, bandCeiling].
+//   Layer 2: selectedCapabilities → summed effort → position inside the band.
+// Returns the QUOTED range { floor, ceiling } (what the prospect sees) plus the
+// internal midpoint (drives payback / net / maintenance) and a full trace.
+//
+//   effortSum = Σ effort weights of the selected capabilities
+//   position  = clamp((effortSum − EFFORT_FLOOR) / (EFFORT_CEILING − EFFORT_FLOOR), 0, 1)
+//   window    = WINDOW_FRACTION × bandWidth          (width of the shown range)
+//   slideRoom = bandWidth − window                   (how far the window can travel)
+//   quoteFloor   = bandFloor + position × slideRoom  (rounded to $250)
+//   quoteCeiling = quoteFloor + window               (rounded to $250)
+//   midpoint     = (quoteFloor + quoteCeiling) / 2   (reproducible from the shown range)
+//
+// With no scope selected yet, the full band is shown and midpoint = band midpoint.
+export function calculatePhase1Range({ revenueRange, selectedCapabilities = [] }) {
+  const band = PHASE1_REVENUE_BANDS[revenueRange] || PHASE1_REVENUE_BANDS['<2m']
+  const bandFloor = band.floor
+  const bandCeiling = band.ceiling
+  const bandWidth = bandCeiling - bandFloor
+  const { EFFORT_FLOOR, EFFORT_CEILING, WINDOW_FRACTION, MAX_PILOT_CAPS } = PHASE1_POSITIONING
+
+  const scope = (selectedCapabilities || []).map((title) => ({ title, weight: getEffortWeight(title) }))
+  const effortSum = scope.reduce((s, c) => s + c.weight, 0)
+  const selectedCount = scope.length
+  const tierLabel = REVENUE_TIER_LABELS[revenueRange] || revenueRange
+
+  const windowWidth = WINDOW_FRACTION * bandWidth
+  const slideRoom = bandWidth - windowWidth
+
+  // No scope picked yet → show the full band; midpoint = band midpoint.
+  if (selectedCount === 0) {
+    const floor = bandFloor
+    const ceiling = bandCeiling
+    return {
+      floor, ceiling, midpoint: (floor + ceiling) / 2, tierKey: revenueRange,
+      bandFloor, bandCeiling, effortSum: 0, position: 0, selectedCount: 0, scope,
+      windowWidth, exceedsPilot: false, noScopeSelected: true,
+      positioningTrace: `No Phase 1 capabilities selected yet — showing the full revenue band for a company ${tierLabel} (${formatCurrency(bandFloor)} – ${formatCurrency(bandCeiling)}). Select one or two capabilities below to position the estimate by scope.`,
+    }
+  }
+
+  const position = Math.max(0, Math.min(1, (effortSum - EFFORT_FLOOR) / (EFFORT_CEILING - EFFORT_FLOOR)))
+  const quoteFloorRaw = bandFloor + position * slideRoom
+  const floor = roundToNearest250(quoteFloorRaw)
+  const ceiling = roundToNearest250(quoteFloorRaw + windowWidth)
+  const midpoint = (floor + ceiling) / 2
+  const exceedsPilot = selectedCount > MAX_PILOT_CAPS || effortSum > EFFORT_CEILING
+
+  const scopeStr = scope.map((c) => `${c.title} [${c.weight}]`).join(' + ')
+  const positioningTrace =
+    `Revenue band for a company ${tierLabel}: ${formatCurrency(bandFloor)} – ${formatCurrency(bandCeiling)}. ` +
+    `Selected scope effort = ${effortSum} (${scopeStr}). ` +
+    `Position = (${effortSum} − ${EFFORT_FLOOR}) ÷ (${EFFORT_CEILING} − ${EFFORT_FLOOR}) = ${Math.round(position * 100)}% of the band. ` +
+    `Quoted Phase 1 range: ${formatCurrency(floor)} – ${formatCurrency(ceiling)} (internal midpoint ${formatCurrency(midpoint)}).`
+
+  return {
+    floor, ceiling, midpoint, tierKey: revenueRange,
+    bandFloor, bandCeiling, effortSum, position, selectedCount, scope,
+    windowWidth, exceedsPilot, noScopeSelected: false, positioningTrace,
+  }
 }
 
 // Dynamic cap: 25 hrs/week for ≤10 employees; +2 hrs per employee above 10.
 export function calculateHrCap(employees) {
   const n = parseInt(employees, 10) || 10
   return n <= 10 ? 25 : 25 + ((n - 10) * 2)
+}
+
+// Blended (midpoint) hourly labor rate for a task's category.
+function blendedRate(laborCategory) {
+  const r = LABOR_RATES[laborCategory] || LABOR_RATES.operations
+  return (r.floor + r.ceiling) / 2
+}
+
+// Annual labor-dollar value a single task represents, before any cap scaling.
+// Basis for impact tiers so the badge always matches the dollar ranking.
+// hrs = (staff × per-person hrs) × efficiency factor; value = hrs × 52 × blended rate.
+export function taskAnnualValue(task) {
+  const ef = task.efficiencyFactor != null ? task.efficiencyFactor : 0.65
+  const effectiveHours = deriveTaskHours(task) * ef
+  return effectiveHours * 52 * blendedRate(task.laborCategory)
+}
+
+// Impact tiers DERIVED FROM each task's annual dollar value, graded relative
+// to the largest opportunity in the set. The highest-dollar task is always
+// High, so the "Where Your Team Is Losing Time" page and the dollar
+// opportunity on the next page tell the same story. Returns { [taskId]: tier }.
+const IMPACT_HIGH_THRESHOLD = 0.6   // ≥60% of the top opportunity → High
+const IMPACT_MEDIUM_THRESHOLD = 0.3 // ≥30% of the top opportunity → Medium
+
+export function deriveImpactTiers(tasks) {
+  const values = tasks.map((t) => ({ id: t.id, value: taskAnnualValue(t) }))
+  const max = values.reduce((m, v) => Math.max(m, v.value), 0)
+  const byId = {}
+  values.forEach(({ id, value }) => {
+    const ratio = max > 0 ? value / max : 0
+    byId[id] = ratio >= IMPACT_HIGH_THRESHOLD ? 'High'
+             : ratio >= IMPACT_MEDIUM_THRESHOLD ? 'Medium'
+             : 'Low'
+  })
+  return byId
 }
 
 const TENURE_NOTE = 'Adjusted for company tenure: established businesses typically carry a large base of lapsed maintenance clients representing meaningful re-engagement opportunity.'
@@ -105,6 +276,10 @@ const TENURE_NOTE = 'Adjusted for company tenure: established businesses typical
 export function calculateROI({ tasks, monthlyMaintenance, phase1, employees, yearsInBusiness }) {
   const includedTasks = tasks.filter((t) => t.included)
   if (includedTasks.length === 0) return { roiAvailable: false }
+
+  // Impact tiers derived from dollar value across ALL included tasks, so the
+  // friction-areas page and the opportunity page rank items identically.
+  const taskImpactById = deriveImpactTiers(includedTasks)
 
   // ── Dynamic cap ──────────────────────────────────────────────────────────
   const numEmployees = parseInt(employees, 10) || 10
@@ -157,7 +332,9 @@ export function calculateROI({ tasks, monthlyMaintenance, phase1, employees, yea
   const operationalFloor   = Math.round(rawOperationalFloor   / 1000) * 1000
   const operationalCeiling = Math.round(rawOperationalCeiling / 1000) * 1000
   const operationalMidpoint = (operationalFloor + operationalCeiling) / 2
-  const weeklyOperationalValue = operationalMidpoint / 52
+  // Round the weekly value to whole dollars so the payback math below is
+  // EXACTLY reproducible from the figure shown on the page.
+  const weeklyOperationalValue = Math.round(operationalMidpoint / 52)
 
   // ── Bucket 2: Revenue Recovery ───────────────────────────────────────────
   const revRecoveryTasks = includedTasks.filter((t) => t.valueBucket === 'revenue_recovery')
@@ -208,8 +385,9 @@ export function calculateROI({ tasks, monthlyMaintenance, phase1, employees, yea
 
   // ── Phase 1 & Payback ────────────────────────────────────────────────────
   const phase1Midpoint = (phase1.floor + phase1.ceiling) / 2
-  const paybackFloorWeeks   = operationalMidpoint > 0 ? Math.round(phase1.floor   / weeklyOperationalValue) : null
-  const paybackCeilingWeeks = operationalMidpoint > 0 ? Math.round(phase1.ceiling / weeklyOperationalValue) : null
+  // Payback divides by the SAME rounded weekly value shown on the page.
+  const paybackFloorWeeks   = weeklyOperationalValue > 0 ? Math.round(phase1.floor   / weeklyOperationalValue) : null
+  const paybackCeilingWeeks = weeklyOperationalValue > 0 ? Math.round(phase1.ceiling / weeklyOperationalValue) : null
 
   // ── Year 1 / Year 2 ──────────────────────────────────────────────────────
   const year1NetFloor   = operationalFloor   - phase1Midpoint - (monthlyMaintenance * 12)
@@ -217,8 +395,17 @@ export function calculateROI({ tasks, monthlyMaintenance, phase1, employees, yea
   const year2NetFloor   = operationalFloor   - (monthlyMaintenance * 12)
   const year2NetCeiling = operationalCeiling - (monthlyMaintenance * 12)
 
+  // Honest maintenance trace: show the exact 10% figure AND the $50 rounding
+  // so the displayed monthly fee is reproducible.
+  const maintExact = Math.round(phase1Midpoint * MAINTENANCE_RATE)
+  const ratePct = Math.round(MAINTENANCE_RATE * 100)
+  const phase1MaintenanceTrace = maintExact === monthlyMaintenance
+    ? `Phase 1 midpoint ($${Math.round(phase1Midpoint).toLocaleString()}) × ${ratePct}% = $${monthlyMaintenance.toLocaleString()}/month`
+    : `Phase 1 midpoint ($${Math.round(phase1Midpoint).toLocaleString()}) × ${ratePct}% = $${maintExact.toLocaleString()}, rounded to $${monthlyMaintenance.toLocaleString()}/month`
+
   const calculationTrace = {
     operationalTasks: operationalTaskDetails,
+    taskImpactById,
     rawOperationalHours: rawOpHoursTotal,
     effectiveOperationalHours: effectiveOpHoursTotal,
     totalScaledHours: Math.min(effectiveOpHoursTotal, hrCap),
@@ -237,9 +424,18 @@ export function calculateROI({ tasks, monthlyMaintenance, phase1, employees, yea
     phase1Ceiling: phase1.ceiling,
     phase1Midpoint,
     phase1TierKey: phase1.tierKey || '(unknown)',
-    phase1TierSource: 'Fixed tier table',
+    phase1TierSource: 'Revenue band + scope positioning',
+    phase1BandFloor: phase1.bandFloor,
+    phase1BandCeiling: phase1.bandCeiling,
+    phase1EffortSum: phase1.effortSum,
+    phase1Position: phase1.position,
+    phase1SelectedCount: phase1.selectedCount,
+    phase1Scope: phase1.scope || [],
+    phase1ExceedsPilot: !!phase1.exceedsPilot,
+    phase1NoScopeSelected: !!phase1.noScopeSelected,
+    phase1PositioningTrace: phase1.positioningTrace || '',
     monthlyMaintenance,
-    phase1MaintenanceTrace: `Phase 1 midpoint ($${Math.round(phase1Midpoint).toLocaleString()}) × 10% = $${monthlyMaintenance.toLocaleString()}/month`,
+    phase1MaintenanceTrace,
     paybackFloorWeeks,
     paybackCeilingWeeks,
     year1NetFloor,
@@ -250,6 +446,7 @@ export function calculateROI({ tasks, monthlyMaintenance, phase1, employees, yea
 
   return {
     roiAvailable: true,
+    taskImpactById,
     isCapped,
     cappingNote: isCapped
       ? `Hours scaled to ${hrCap} hrs/week, a conservative ceiling based on your team size of ${numEmployees} employees. This reflects realistic automation coverage: a new system doesn't instantly capture 100% of available time savings. Formula: ${capFormula}.`

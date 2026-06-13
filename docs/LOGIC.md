@@ -44,14 +44,7 @@ function calculatePhase1Maintenance(phase1) {
 }
 ```
 
-This is the value passed to `calculateROI` as `monthlyMaintenance` and displayed in Phase 3 card. Rounded to nearest $50.
-
-| Revenue Range | Phase 1 Range      | Midpoint  | Phase 1 Maintenance |
-|---------------|--------------------|-----------|---------------------|
-| < $2M         | $2,500 – $4,000    | $3,250    | $350/month          |
-| $2–5M         | $3,500 – $6,000    | $4,750    | $500/month          |
-| $5–10M        | $5,000 – $8,500    | $6,750    | $700/month          |
-| $10M+         | $7,500 – $12,000   | $9,750    | $1,000/month        |
+This is the value passed to `calculateROI` as `monthlyMaintenance` and displayed in Phase 3 card. Rounded to nearest $50. The `phase1.floor`/`phase1.ceiling` here are the **quoted** range (after scope positioning, see below), so maintenance tracks the scoped midpoint, not a fixed tier value.
 
 Trace string stored in `calculationTrace.phase1MaintenanceTrace`:
 `"Phase 1 midpoint ($X) × 10% = $Y/month"`
@@ -118,33 +111,74 @@ These are conservative fully-loaded hourly cost estimates, not billing rates.
 
 ---
 
-## Phase 1 Pricing (calculatePhase1Range)
+## Phase 1 Pricing (calculatePhase1Range) — TWO-LAYER MODEL
 
-Fixed tier table — not percentage-based. Returns `{ floor, ceiling, tierKey }` where `tierKey` is the revenueRange key used for trace display.
+Phase 1 price is set by two transparent, fully config-driven layers:
+
+- **Layer 1 — Revenue band (ability to pay):** the revenue tier selects a fixed `[floor, ceiling]` band.
+- **Layer 2 — Scope (effort):** the capabilities selected for the Phase 1 build each carry an effort weight (light/medium/heavy). The summed effort positions the quoted range *inside* the band — light scope sits near the floor, heavy scope near the ceiling.
+
+Signature: `calculatePhase1Range({ revenueRange, selectedCapabilities = [] })`. `selectedCapabilities` is an array of capability titles (from `src/data/niches.js`). Returns the **quoted** range plus the internal midpoint and a trace.
+
+### Layer 1 — Revenue band
 
 ```js
-const PHASE1_TIERS = {
-  '<2m':   { floor: 2500, ceiling: 4000  },
-  '2-5m':  { floor: 3500, ceiling: 6000  },
-  '5-10m': { floor: 5000, ceiling: 8500  },
-  '10m+':  { floor: 7500, ceiling: 12000 },
-}
-
-function calculatePhase1Range({ revenueRange }) {
-  const tier = PHASE1_TIERS[revenueRange]
-  if (!tier) return { floor: 2500, ceiling: 4000, tierKey: revenueRange }
-  let { floor, ceiling } = tier
-  if (ceiling - floor < 1500) ceiling = floor + 1500   // guard; always passes with current values
-  return { floor, ceiling, tierKey: revenueRange }
+const PHASE1_REVENUE_BANDS = {
+  '<2m':   { floor: 4000, ceiling: 6000  },
+  '2-5m':  { floor: 5500, ceiling: 7500  },
+  '5-10m': { floor: 7000, ceiling: 9500  },
+  '10m+':  { floor: 8500, ceiling: 12000 },
 }
 ```
 
-| Revenue Range | Phase 1 Floor | Phase 1 Ceiling |
-|---------------|---------------|-----------------|
-| < $2M         | $2,500        | $4,000          |
-| $2–5M         | $3,500        | $6,000          |
-| $5–10M        | $5,000        | $8,500          |
-| $10M+         | $7,500        | $12,000         |
+| Revenue Range | Band Floor | Band Ceiling | Width |
+|---------------|------------|--------------|-------|
+| < $2M         | $4,000     | $6,000       | $2,000 |
+| $2–5M         | $5,500     | $7,500       | $2,000 |
+| $5–10M        | $7,000     | $9,500       | $2,500 |
+| $10M+         | $8,500     | $12,000      | $3,500 |
+
+### Layer 2 — Effort weights (build complexity)
+
+Keyed by capability title. `light = 1`, `medium = 2`, `heavy = 3`. Anything not listed → `DEFAULT_EFFORT_WEIGHT` (2). All editable in `calculations.js`.
+
+- **Light (1):** Automated Invoicing · Automated Invoicing and Billing · Weekly Report Automation
+- **Medium (2):** AI Owner Briefings · AI Operations Assistant · Maintenance Renewal Tracker · Estimate Conversion Tracking · Research Center · (+ default 2 for: Technician Profitability Dashboard, Job Type Margin Analysis, Automated Follow-Up Workflows, Missed Call Recovery, Callback and Warranty Tracking, Cross-System Reporting, Lead Source Attribution, Client Intake Automation, Caseload Intelligence Dashboard, Deadline and Compliance Tracker, Billing Realization Tracker, Client Follow-Up Automation)
+- **Heavy (3):** Proposal and Work Order Automation · Job Status Tracker · Scheduling and Dispatch Optimization · 30/60/90 Capacity Forecast
+
+### Positioning formula
+
+```js
+const PHASE1_POSITIONING = {
+  EFFORT_FLOOR: 1,      // effort ≤ 1 → band floor (a single light build)
+  EFFORT_CEILING: 6,    // effort ≥ 6 → band ceiling (two heavy builds)
+  WINDOW_FRACTION: 0.6, // shown range spans 60% of the band, and slides within it
+  MAX_PILOT_CAPS: 2,    // beyond this many capabilities → exceedsPilot flag
+}
+
+effortSum    = Σ getEffortWeight(title) for each selected capability
+position     = clamp((effortSum − EFFORT_FLOOR) / (EFFORT_CEILING − EFFORT_FLOOR), 0, 1)
+bandWidth    = bandCeiling − bandFloor
+windowWidth  = WINDOW_FRACTION × bandWidth
+slideRoom    = bandWidth − windowWidth
+floor   = roundToNearest250(bandFloor + position × slideRoom)   // quoted floor (shown)
+ceiling = roundToNearest250(bandFloor + position × slideRoom + windowWidth) // quoted ceiling (shown)
+midpoint = (floor + ceiling) / 2   // internal — drives payback / net / maintenance
+exceedsPilot = selectedCount > MAX_PILOT_CAPS || effortSum > EFFORT_CEILING
+```
+
+**No scope selected:** `floor = bandFloor`, `ceiling = bandCeiling`, `midpoint = band midpoint`, `noScopeSelected = true`. The full band is shown until the salesperson picks capabilities.
+
+Returns `{ floor, ceiling, midpoint, tierKey, bandFloor, bandCeiling, effortSum, position, selectedCount, scope: [{title, weight}], windowWidth, exceedsPilot, noScopeSelected, positioningTrace }`.
+
+### Worked examples — $5–10M company (band $7,000–$9,500; window = 0.6 × 2,500 = $1,500; slideRoom = $1,000)
+
+| Selected scope | Effort | Position | Quoted range (shown) | Internal midpoint | Maintenance |
+|----------------|--------|----------|----------------------|-------------------|-------------|
+| Automated Invoicing only | 1 | (1−1)/5 = 0% | **$7,000 – $8,500** | $7,750 | $800/mo |
+| Proposal & Work Order Automation + Job Status Tracker | 3+3 = 6 | (6−1)/5 = 100% | **$8,000 – $9,500** | $8,750 | $900/mo |
+
+Every figure traces: band from `PHASE1_REVENUE_BANDS`, weights from `EFFORT_WEIGHTS`, position from the printed formula. Revenue dominates the range; scope tunes the position inside it.
 
 ---
 
@@ -280,11 +314,20 @@ calculationTrace: {
   operationalCeiling,
   operationalMidpoint,
   weeklyOperationalValue,
-  phase1Floor,
-  phase1Ceiling,
+  phase1Floor,                 // quoted floor (after scope positioning)
+  phase1Ceiling,               // quoted ceiling (after scope positioning)
   phase1Midpoint,
-  phase1TierKey,               // revenueRange key used to select the Phase 1 tier
-  phase1TierSource,            // 'Fixed tier table'
+  phase1TierKey,               // revenueRange key used to select the Phase 1 band
+  phase1TierSource,            // 'Revenue band + scope positioning'
+  phase1BandFloor,             // Layer-1 band floor before positioning
+  phase1BandCeiling,           // Layer-1 band ceiling before positioning
+  phase1EffortSum,             // Σ effort weights of selected capabilities
+  phase1Position,              // 0–1 position within the band
+  phase1SelectedCount,         // number of capabilities selected for Phase 1
+  phase1Scope,                 // [{ title, weight }]
+  phase1ExceedsPilot,          // true if scope is broader than a 1–2 capability pilot
+  phase1NoScopeSelected,       // true if no capabilities selected yet (full band shown)
+  phase1PositioningTrace,      // human-readable band + effort + position derivation
   monthlyMaintenance,          // = calculatePhase1Maintenance(phase1) — Phase 1-based
   phase1MaintenanceTrace,      // human-readable: "Phase 1 midpoint ($X) × 10% = $Y/month"
   paybackFloorWeeks,
@@ -386,11 +429,13 @@ Custom tasks default to `operations` / `operational` / `0.65`, but `laborCategor
 
 Capability cards are defined in `src/data/niches.js` as `CAPABILITIES`. They are niche-filtered: `hvac` and `electrical` use the same list; `legal` uses its own list; `other` falls back to the HVAC/Electrical list.
 
-Cards are display-only (no interactivity). Each has: `title`, `description` (one sentence), and `tag` (one of: Operational Efficiency / Revenue Intelligence / Financial Clarity).
+Each has: `title`, `description` (one sentence), and `tag` (one of: Operational Efficiency / Revenue Intelligence / Financial Clarity).
+
+**Cards are selectable (Phase 1 scope picker).** Each card has a checkbox. The set of checked titles is held in `App.jsx` state (`selectedCapabilities`, persisted to localStorage) and passed to `calculatePhase1Range` as `selectedCapabilities`. Checking/unchecking recomputes the entire output live (output is a `useMemo` derived from inputs). Selected cards show an "In Phase 1" marker and a green accent; cards still also show the "Recommended" marker driven by Constantly-marked tasks. A summary strip above the cards lists the current Phase 1 scope and the quoted range. The effort weight of each capability lives in `EFFORT_WEIGHTS` (`calculations.js`), not on the card object.
 
 Note shown below the card list: "We build on top of your existing software. All capabilities connect directly to the tools you already use. Your Phase 1 pilot addresses one or two of these. A full engagement can include any combination."
 
-### HVAC / Electrical (17 capabilities, in display order)
+### HVAC / Electrical (18 capabilities, in display order)
 
 | # | Title | Tag |
 |---|-------|-----|
@@ -411,8 +456,9 @@ Note shown below the card list: "We build on top of your existing software. All 
 | 15 | Lead Source Attribution | Financial Clarity |
 | 16 | AI Operations Assistant | Operational Efficiency |
 | 17 | Weekly Report Automation | Operational Efficiency |
+| 18 | Research Center | Revenue Intelligence |
 
-### Legal (10 capabilities, in display order)
+### Legal (11 capabilities, in display order)
 
 | # | Title | Tag |
 |---|-------|-----|
@@ -426,6 +472,7 @@ Note shown below the card list: "We build on top of your existing software. All 
 | 8 | Client Follow-Up Automation | Revenue Intelligence |
 | 9 | Cross-System Reporting | Financial Clarity |
 | 10 | AI Operations Assistant | Operational Efficiency |
+| 11 | Research Center | Revenue Intelligence |
 
 ---
 
