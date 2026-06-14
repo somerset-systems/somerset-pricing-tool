@@ -23,7 +23,7 @@ export default function NicheSelector({ niche, nicheLabel, onSelect, onContinue 
   return (
     <div
       className="rounded-lg p-8"
-      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-panel)' }}
     >
       <h1
         className="text-2xl mb-2"
@@ -44,7 +44,7 @@ export default function NicheSelector({ niche, nicheLabel, onSelect, onContinue 
               type="button"
               aria-pressed={isSelected}
               onClick={() => handleCardClick(n.id)}
-              className="text-left p-5 transition-colors"
+              className="niche-card text-left p-5 transition-colors"
               style={{
                 borderRadius: 5,
                 background: isSelected ? 'var(--bg-active)' : 'var(--bg-card)',
@@ -101,8 +101,8 @@ export default function NicheSelector({ niche, nicheLabel, onSelect, onContinue 
           disabled={!canContinue}
           className={canContinue ? 'btn-primary' : ''}
           style={{
-            background: canContinue ? 'var(--brand-green)' : '#D1D5DB',
-            color: 'var(--bg-card)',
+            background: canContinue ? 'var(--brand-green)' : 'var(--btn-disabled)',
+            color: canContinue ? 'var(--bg-card)' : 'var(--btn-disabled-ink)',
             border: 'none',
             padding: '12px 28px',
             borderRadius: 5,

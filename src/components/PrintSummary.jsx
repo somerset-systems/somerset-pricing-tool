@@ -1,4 +1,4 @@
-import { formatCurrency, deriveTaskHours, LABOR_RATES } from '../utils/calculations.js'
+import { formatCurrency, deriveTaskHours, LABOR_RATES, PHASE1_POSITIONING } from '../utils/calculations.js'
 import { CAPABILITIES, INDUSTRY_INTELLIGENCE } from '../data/niches.js'
 
 const REVENUE_LABELS = {
@@ -64,6 +64,12 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
   const capabilities = CAPABILITIES[niche] || CAPABILITIES.other
   const intel = INDUSTRY_INTELLIGENCE[niche] || INDUSTRY_INTELLIGENCE.other
 
+  // First MAX_PILOT selected capabilities are the pilot; the rest are Phase 2 scope.
+  const MAX_PILOT = PHASE1_POSITIONING.MAX_PILOT_CAPS
+  const pilotCaps = selectedCapabilities.slice(0, MAX_PILOT)
+  const overflowCaps = selectedCapabilities.slice(MAX_PILOT)
+  const pilotSet = new Set(pilotCaps)
+
   const capsByTag = {}
   TAG_ORDER.forEach(tag => {
     const filtered = capabilities.filter(c => c.tag === tag)
@@ -89,7 +95,6 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
           <div><div style={s.label}>Industry</div><div style={s.value}>{nicheLabel}</div></div>
           <div><div style={s.label}>Annual Revenue</div><div style={s.value}>{REVENUE_LABELS[company.revenueRange] || '—'}</div></div>
           <div><div style={s.label}>Team Size</div><div style={s.value}>{company.employees ? `${company.employees} employees` : '—'}</div></div>
-          <div><div style={s.label}>Integration</div><div style={s.value}>Built to work alongside the tools you already use.</div></div>
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 6 }}>Prepared {today}</div>
         <p style={{ ...s.muted, marginTop: 8 }}>
@@ -236,7 +241,7 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
             {intel && (
               <div style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--border)', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-heading)', marginBottom: 4 }}>
-                  Industry Intelligence — Research Center ({intel.badge})
+                  Industry Intelligence: Research Center ({intel.badge})
                 </div>
                 <p style={{ ...s.body, marginBottom: 4 }}>{intel.intro}</p>
                 <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
@@ -264,7 +269,7 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
       <div style={{ ...s.card, pageBreakBefore: 'always', breakBefore: 'page' }}>
         <h2 style={s.sectionTitle}>Recommended Implementation Phases</h2>
         {[
-          { n: 1, title: 'Pilot & Proof', desc: 'One focused improvement to deliver fast value and build trust. We identify your single highest-impact friction point, build a targeted solution, and prove ROI before asking for full commitment.', investment: phase1Label, investmentNote: phase1.selectedCount > 0 ? `Scope: ${selectedCapabilities.join(', ')}. ${phase1.positioningTrace}` : 'Full range for a company this size; Phase 1 scope to be finalized.' },
+          { n: 1, title: 'Pilot & Proof', desc: 'One or two focused improvements that deliver fast value and prove ROI before any larger commitment.', investment: phase1Label, investmentNote: phase1.selectedCount > 0 ? `Phase 1 scope: ${pilotCaps.join(', ')}.${overflowCaps.length ? ` Phase 2 scope: ${overflowCaps.join(', ')}.` : ''}` : 'Full range for a company this size; Phase 1 scope to be finalized.' },
           { n: 2, title: 'Operational Intelligence Layer', desc: 'A full operational engagement scoped around your specific priorities. Any capability from the list below: cross-system reporting, AI-assisted insights, workflow automations, margin analysis, capacity forecasting, or any combination that addresses your most important pain points. Scoped and priced after Phase 1 proves the foundation.', investment: 'Scoped after Phase 1, based on your specific needs and priorities.' },
           { n: 3, title: 'Ongoing Optimization', desc: 'Monthly maintenance, new automations, additional integrations, and AI improvements as your business grows. Your system evolves with you.', investment: tr ? `~${formatCurrency(tr.monthlyMaintenance)}/month` : 'Typically 10% of Phase 1 investment per month', investmentNote: tr ? tr.phase1MaintenanceTrace : undefined },
         ].map(({ n, title, desc, investment, investmentNote }) => (
@@ -300,11 +305,15 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
               </div>
               {caps.map((cap) => {
                 const selected = selectedCapSet.has(cap.title)
+                const inPilot = pilotSet.has(cap.title)
+                const selStyle = selected
+                  ? { border: `1px solid ${inPilot ? 'var(--brand-green)' : 'var(--text-muted)'}`, borderRadius: 4, padding: '6px 8px' }
+                  : { borderBottom: '1px solid var(--border-faint)', paddingBottom: 6 }
                 return (
-                  <div key={cap.title} style={{ marginBottom: 6, paddingBottom: 6, paddingLeft: selected ? 8 : 0, borderLeft: selected ? '3px solid var(--brand-green)' : 'none', borderBottom: '1px solid #E8E8E4', pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                  <div key={cap.title} style={{ marginBottom: 6, ...selStyle, pageBreakInside: 'avoid', breakInside: 'avoid' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
                       <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-heading)' }}>{cap.title}</span>
-                      {selected && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--brand-green)', flexShrink: 0 }}>IN PHASE 1</span>}
+                      {selected && <span style={{ fontSize: 9, fontWeight: 700, color: inPilot ? 'var(--brand-green)' : 'var(--text-muted)', flexShrink: 0 }}>{inPilot ? 'IN PHASE 1' : 'PHASE 2 SCOPE'}</span>}
                     </div>
                     <p style={{ ...s.body, fontSize: 11, lineHeight: 1.5 }}>{cap.description}</p>
                   </div>
@@ -315,32 +324,8 @@ export default function PrintSummary({ output, company, niche, nicheLabel, tasks
         })}
 
         <p style={{ ...s.muted, textAlign: 'center', marginTop: 4 }}>
-          We build on top of your existing software. All capabilities are built to work alongside the tools you already use. Your Phase 1 pilot addresses one or two of these. A full engagement can include any combination.
+          Your Phase 1 pilot addresses one or two of these. A full engagement can include any combination.
         </p>
-      </div>
-
-      {/* Section E — Why This Fits */}
-      <div style={s.card}>
-        <h2 style={s.sectionTitle}>Why This Fits Your Business</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', marginBottom: 14 }}>
-          {[
-            { label: 'Works alongside your stack', desc: "Built to work alongside whatever tools you're already running. No replacements." },
-            { label: 'Nothing disrupted', desc: 'Your existing workflows stay intact. We build capability on top.' },
-            { label: 'Built only for you', desc: 'Every build is scoped around your specific operations, not a template.' },
-            { label: 'Grows with you', desc: 'Phase 1 infrastructure is designed to expand as your priorities evolve.' },
-          ].map(pt => (
-            <div key={pt.label} style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-heading)', marginBottom: 2 }}>{pt.label}</div>
-              <div style={{ fontSize: 11, color: 'var(--text-body)', lineHeight: 1.5 }}>{pt.desc}</div>
-            </div>
-          ))}
-        </div>
-        <div style={s.divider}>
-          <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-heading)', margin: '0 0 5px' }}>Where This Can Go</h3>
-          <p style={{ ...s.body, fontSize: 11 }}>
-            Every engagement starts focused, one or two improvements, proven fast. But the infrastructure we build in Phase 1 is designed to grow. If you want it, a full operational layer is possible: one place where all your tools agree on the numbers that matter: revenue, utilization, capacity, margin, and pipeline.
-          </p>
-        </div>
       </div>
 
       {/* Footer */}

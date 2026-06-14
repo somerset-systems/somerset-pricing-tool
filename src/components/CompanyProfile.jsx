@@ -107,7 +107,7 @@ export default function CompanyProfile({ company, niche, onChange, onBack, onCon
   return (
     <div
       className="rounded-lg p-8"
-      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-panel)' }}
     >
       <h1
         className="text-2xl mb-2"

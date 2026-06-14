@@ -33,13 +33,12 @@ export const PHASE1_REVENUE_BANDS = {
 // These are build-complexity estimates — edit freely as real build times land.
 // Any capability not listed here falls back to DEFAULT_EFFORT_WEIGHT.
 export const EFFORT_WEIGHTS = {
-  // ── Light (1) ──────────────────────────────────────────────────────────
-  'Automated Invoicing':                  1,
-  'Automated Invoicing and Billing':      1,
+  // ── Light (1) — one templated report pulled from a single system, low judgment.
   'Weekly Report Automation':             1,
-  // ── Medium (2) ─────────────────────────────────────────────────────────
+  // ── Medium (2) — read-only analytics/dashboards, scheduled digests,
+  //    single-purpose outbound automations, or external monitoring. No money
+  //    written back, no optimization model.
   'AI Owner Briefings':                   2,
-  'AI Operations Assistant':              2,
   'Maintenance Renewal Tracker':          2,
   'Estimate Conversion Tracking':         2,
   'Research Center':                      2,
@@ -50,16 +49,21 @@ export const EFFORT_WEIGHTS = {
   'Callback and Warranty Tracking':       2,
   'Cross-System Reporting':               2,
   'Lead Source Attribution':              2,
+  'Job Status Tracker':                   2,  // live read-only aggregation across systems; no write-back or optimization
   'Client Intake Automation':             2,
   'Caseload Intelligence Dashboard':      2,
   'Deadline and Compliance Tracker':      2,
   'Billing Realization Tracker':          2,
   'Client Follow-Up Automation':          2,
-  // ── Heavy (3) ──────────────────────────────────────────────────────────
+  // ── Heavy (3) — touches money/tax, writes back into a system of record,
+  //    runs an optimization/forecast model, or is a general-purpose AI
+  //    assistant over a unified live-data model.
+  'Automated Invoicing':                  3,  // tax handling + payment/accounting write-back + reconciliation
+  'Automated Invoicing and Billing':      3,  // legal billing: time-entry compilation, trust/realization, tax
   'Proposal and Work Order Automation':   3,
-  'Job Status Tracker':                   3,
   'Scheduling and Dispatch Optimization': 3,
   '30/60/90 Capacity Forecast':           3,
+  'AI Operations Assistant':              3,  // reliable natural-language layer over live ops data
 }
 export const DEFAULT_EFFORT_WEIGHT = 2
 

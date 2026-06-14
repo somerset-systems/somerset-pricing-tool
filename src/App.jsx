@@ -172,6 +172,10 @@ export default function App() {
       .navlink:hover { background: var(--bg-active) !important; border-color: var(--border) !important; }
       .freq-btn-inactive { transition: border-color 0.1s, color 0.1s; }
       .freq-btn-inactive:hover { border-color: var(--brand-green) !important; color: var(--brand-green) !important; }
+      .cap-row { transition: box-shadow 0.12s; }
+      .cap-row:hover { box-shadow: inset 0 0 0 1.5px var(--brand-green); }
+      .niche-card { transition: box-shadow 0.12s, border-color 0.12s; }
+      .niche-card:hover { border-color: var(--brand-green) !important; }
       .input-field:focus, .select-field:focus {
         border-color: var(--brand-green) !important;
         box-shadow: 0 0 0 3px rgba(45, 94, 58, 0.12) !important;
@@ -184,7 +188,7 @@ export default function App() {
         {/* Persistent header */}
         <div
           className="flex flex-wrap items-center gap-4 pb-6 mb-6"
-          style={{ borderBottom: '1px solid #D8D4C8' }}
+          style={{ borderBottom: '1px solid var(--border)' }}
         >
           <img
             src="/somerset-logo-horizontal.png"
@@ -194,22 +198,31 @@ export default function App() {
             onError={(e) => { e.currentTarget.style.display = 'none' }}
             style={{ height: 48, width: 'auto', flexShrink: 0, objectFit: 'contain' }}
           />
-          <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, color: 'var(--text-secondary)', paddingLeft: 16, borderLeft: '1px solid #D8D4C8' }}>
+          <div style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 12, color: 'var(--text-secondary)', paddingLeft: 16, borderLeft: '1px solid var(--border)' }}>
             Operational Opportunity Assessment
           </div>
           {(niche || currentStep > 1) && (
-            <button
-              type="button"
-              onClick={handleReset}
-              className="btn-reset"
-              style={{
-                marginLeft: 'auto', flexShrink: 0, background: 'transparent', border: 'none',
-                color: 'var(--text-muted)', font: '500 12px DM Sans', cursor: 'pointer',
-                padding: '6px 8px', borderRadius: 5,
-              }}
-            >
-              Start over
-            </button>
+            <div style={{ marginLeft: 'auto', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span
+                title="Your in-progress assessment is kept in this browser, so a refresh or tab switch won't lose it."
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--text-muted)' }}
+              >
+                <span aria-hidden="true" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--brand-green)', flexShrink: 0 }} />
+                Progress saved
+              </span>
+              <button
+                type="button"
+                onClick={handleReset}
+                className="btn-reset"
+                style={{
+                  background: 'transparent', border: 'none',
+                  color: 'var(--text-muted)', font: '500 12px DM Sans', cursor: 'pointer',
+                  padding: '10px 12px', minHeight: 40, borderRadius: 5,
+                }}
+              >
+                Start over
+              </button>
+            </div>
           )}
         </div>
 

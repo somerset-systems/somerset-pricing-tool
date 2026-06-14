@@ -17,6 +17,15 @@
   --success:          #2D5E3A;
   --badge-low:        #6E6E6E;
   --font-mono:        ui-monospace, Consolas, monospace;
+  /* Inert controls: a warm neutral that belongs to this palette, not a cool gray. */
+  --btn-disabled:     #D6D1C4;
+  --btn-disabled-ink: #8C8676;
+  /* Hairline used inside dense print/list dividers (slightly lighter than --border). */
+  --border-faint:     #E8E8E4;
+  /* Brand-tinted elevation. One source of truth for card/panel shadows. */
+  --shadow-card:      0 2px 16px rgba(45, 94, 58, 0.10);
+  --shadow-card-raised: 0 4px 28px rgba(45, 94, 58, 0.14);
+  --shadow-panel:     0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 body {
@@ -125,6 +134,16 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
+/* Phase 1 figure recomputes live as the salesperson toggles scope.
+   A brief settle signals the cause/effect to the prospect on screenshare. */
+@keyframes price-settle {
+  from { opacity: 0.35; transform: translateY(2px); }
+  to   { opacity: 1;    transform: translateY(0); }
+}
+.price-settle {
+  animation: price-settle 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -138,7 +157,7 @@ button:focus-visible {
   .print-only { display: block !important; }
   body { background: white; font-size: 12px; orphans: 3; widows: 3; }
   h1, h2, h3 { font-family: 'DM Serif Display', serif; page-break-after: auto; }
-  .card, [class*="card"] { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; break-inside: avoid; }
+  .card, [class*="card"] { box-shadow: none; border: 1px solid var(--border); page-break-inside: avoid; break-inside: avoid; }
   .section, [class*="section"] { page-break-inside: avoid; break-inside: avoid; }
   .phase, [class*="phase"] { page-break-inside: avoid; break-inside: avoid; }
   .task-row, [class*="task-row"] { page-break-inside: avoid; break-inside: avoid; }

@@ -130,7 +130,7 @@ Each card:
 - White background, border 1.5px solid `#D8D4C8`
 - Icon (simple SVG or emoji) + niche name in DM Serif Display
 - Short descriptor in DM Sans below
-- Selected state: border-color `#2D5E3A`, background `#F0F4F1`, left border 4px solid `#2D5E3A`
+- Selected state: full 1.5px border `#2D5E3A`, background `#F0F4F1` (no side stripe)
 
 ---
 
@@ -149,7 +149,7 @@ Each task is a row:
 
 ## Output Panel (Step 4)
 
-Three distinct sections, each in its own card with green left border (`#2D5E3A`).
+Distinct sections, each in its own card with a 3px green top border (`#2D5E3A`) — a structural accent, not a side stripe.
 
 **Capabilities (Section D.5):**
 - Non-highlighted capability cards: `#FAFAFA` background, `1px solid var(--border)` all sides

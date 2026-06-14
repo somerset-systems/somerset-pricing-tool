@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useId } from 'react'
 
 const IMPACT_STYLE = {
   High:   { background: 'var(--brand-green)', color: 'var(--bg-card)' },
@@ -36,9 +36,22 @@ const inputStyle = {
   textAlign: 'center',
 }
 
+// Dismiss a focus-triggered tooltip with Escape (WCAG 1.4.13) by dropping focus.
+function dismissOnEscape(e) {
+  if (e.key === 'Escape') e.currentTarget.blur()
+}
+
 function ImpactBadge({ level }) {
+  const tipId = useId()
   return (
-    <div className="impact-badge flex-shrink-0" tabIndex={0}>
+    <button
+      type="button"
+      className="impact-badge flex-shrink-0"
+      aria-describedby={tipId}
+      onClick={(e) => e.preventDefault()}
+      onKeyDown={dismissOnEscape}
+      style={{ background: 'none', border: 'none', padding: 0, cursor: 'help', font: 'inherit' }}
+    >
       <span
         style={{
           ...IMPACT_STYLE[level],
@@ -51,8 +64,8 @@ function ImpactBadge({ level }) {
       >
         {level}
       </span>
-      <div className="impact-badge-tooltip">{IMPACT_TOOLTIPS[level]}</div>
-    </div>
+      <div className="impact-badge-tooltip" role="tooltip" id={tipId}>{IMPACT_TOOLTIPS[level]}</div>
+    </button>
   )
 }
 
@@ -102,6 +115,7 @@ function PeopleInput({ id, people, onPeopleChange }) {
 }
 
 function PeopleFreqControls({ people, frequency, onPeopleChange, onFreqChange, staffInputId }) {
+  const tipBase = useId()
   const btnBase = {
     padding: '0 10px',
     minHeight: 44,
@@ -129,20 +143,25 @@ function PeopleFreqControls({ people, frequency, onPeopleChange, onFreqChange, s
       <fieldset style={{ border: 0, margin: 0, padding: 0, minInlineSize: 0 }} className="flex items-center gap-1.5">
         <legend className="text-xs" style={{ color: 'var(--text-muted)', flexShrink: 0, padding: 0 }}>How often:</legend>
         <div className="flex gap-1">
-          {FREQ_OPTIONS.map((opt) => (
-            <div key={opt} className="freq-btn-wrapper">
-              <button
-                type="button"
-                onClick={() => onFreqChange(opt)}
-                aria-pressed={frequency === opt}
-                className={frequency === opt ? '' : 'freq-btn-inactive'}
-                style={frequency === opt ? active : inactive}
-              >
-                {opt}
-              </button>
-              <div className="freq-btn-tooltip">{FREQ_TOOLTIPS[opt]}</div>
-            </div>
-          ))}
+          {FREQ_OPTIONS.map((opt) => {
+            const tipId = `${tipBase}-${opt}`
+            return (
+              <div key={opt} className="freq-btn-wrapper">
+                <button
+                  type="button"
+                  onClick={() => onFreqChange(opt)}
+                  onKeyDown={dismissOnEscape}
+                  aria-pressed={frequency === opt}
+                  aria-describedby={tipId}
+                  className={frequency === opt ? '' : 'freq-btn-inactive'}
+                  style={frequency === opt ? active : inactive}
+                >
+                  {opt}
+                </button>
+                <div className="freq-btn-tooltip" role="tooltip" id={tipId}>{FREQ_TOOLTIPS[opt]}</div>
+              </div>
+            )
+          })}
         </div>
       </fieldset>
     </div>
@@ -186,7 +205,7 @@ export default function TaskAudit({
   return (
     <div
       className="rounded-lg p-8"
-      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}
+      style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', boxShadow: 'var(--shadow-panel)' }}
     >
       <h1
         className="text-2xl mb-2"
@@ -393,9 +412,10 @@ export default function TaskAudit({
           <button
             onClick={onContinue}
             disabled={!canGenerate}
+            className={canGenerate ? 'btn-primary' : ''}
             style={{
-              background: canGenerate ? 'var(--brand-green)' : '#D1D5DB',
-              color: '#fff',
+              background: canGenerate ? 'var(--brand-green)' : 'var(--btn-disabled)',
+              color: canGenerate ? '#fff' : 'var(--btn-disabled-ink)',
               border: 'none',
               padding: '12px 28px',
               borderRadius: 5,
@@ -403,7 +423,7 @@ export default function TaskAudit({
               font: '500 15px DM Sans',
             }}
           >
-            Generate Assessment
+            Generate assessment
           </button>
         </div>
       </div>

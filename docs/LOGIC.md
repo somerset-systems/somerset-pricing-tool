@@ -142,9 +142,11 @@ const PHASE1_REVENUE_BANDS = {
 
 Keyed by capability title. `light = 1`, `medium = 2`, `heavy = 3`. Anything not listed → `DEFAULT_EFFORT_WEIGHT` (2). All editable in `calculations.js`.
 
-- **Light (1):** Automated Invoicing · Automated Invoicing and Billing · Weekly Report Automation
-- **Medium (2):** AI Owner Briefings · AI Operations Assistant · Maintenance Renewal Tracker · Estimate Conversion Tracking · Research Center · (+ default 2 for: Technician Profitability Dashboard, Job Type Margin Analysis, Automated Follow-Up Workflows, Missed Call Recovery, Callback and Warranty Tracking, Cross-System Reporting, Lead Source Attribution, Client Intake Automation, Caseload Intelligence Dashboard, Deadline and Compliance Tracker, Billing Realization Tracker, Client Follow-Up Automation)
-- **Heavy (3):** Proposal and Work Order Automation · Job Status Tracker · Scheduling and Dispatch Optimization · 30/60/90 Capacity Forecast
+Rubric: **heavy** = touches money/tax, writes back into a system of record, runs an optimization/forecast model, or is a general-purpose AI assistant over live data; **medium** = read-only analytics/dashboards, scheduled digests, single-purpose automations, or external monitoring; **light** = one templated report pulled from a single system.
+
+- **Light (1):** Weekly Report Automation
+- **Medium (2):** AI Owner Briefings · Maintenance Renewal Tracker · Estimate Conversion Tracking · Research Center · Job Status Tracker · (+ default 2 for: Technician Profitability Dashboard, Job Type Margin Analysis, Automated Follow-Up Workflows, Missed Call Recovery, Callback and Warranty Tracking, Cross-System Reporting, Lead Source Attribution, Client Intake Automation, Caseload Intelligence Dashboard, Deadline and Compliance Tracker, Billing Realization Tracker, Client Follow-Up Automation)
+- **Heavy (3):** Automated Invoicing · Automated Invoicing and Billing · Proposal and Work Order Automation · Scheduling and Dispatch Optimization · 30/60/90 Capacity Forecast · AI Operations Assistant
 
 ### Positioning formula
 
@@ -175,8 +177,8 @@ Returns `{ floor, ceiling, midpoint, tierKey, bandFloor, bandCeiling, effortSum,
 
 | Selected scope | Effort | Position | Quoted range (shown) | Internal midpoint | Maintenance |
 |----------------|--------|----------|----------------------|-------------------|-------------|
-| Automated Invoicing only | 1 | (1−1)/5 = 0% | **$7,000 – $8,500** | $7,750 | $800/mo |
-| Proposal & Work Order Automation + Job Status Tracker | 3+3 = 6 | (6−1)/5 = 100% | **$8,000 – $9,500** | $8,750 | $900/mo |
+| Weekly Report Automation only | 1 | (1−1)/5 = 0% | **$7,000 – $8,500** | $7,750 | $800/mo |
+| Proposal & Work Order Automation + Scheduling and Dispatch Optimization | 3+3 = 6 | (6−1)/5 = 100% | **$8,000 – $9,500** | $8,750 | $900/mo |
 
 Every figure traces: band from `PHASE1_REVENUE_BANDS`, weights from `EFFORT_WEIGHTS`, position from the printed formula. Revenue dominates the range; scope tunes the position inside it.
 

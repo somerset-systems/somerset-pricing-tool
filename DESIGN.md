@@ -101,7 +101,7 @@ This system explicitly rejects the look of generic Excel/PDF outputs: unstyled t
 A single-accent system built around one saturated brand color and a warm neutral ramp. The green earns meaning through scarcity.
 
 ### Primary
-- **Canopy Green** (#2D5E3A): The Somerset brand anchor. Used for primary buttons, active/selected states, section card left borders in the output panel, impact badges (High), step indicator active dots, checkbox fill, and the persistent header. Never used as a background on large surfaces.
+- **Canopy Green** (#2D5E3A): The Somerset brand anchor. Used for primary buttons, active/selected states, section card top-border accents in the output panel, impact badges (High), step indicator active dots, checkbox fill, and the persistent header. Never used as a background on large surfaces.
 - **Canopy Green Light** (#3D7A4E): Hover state for the primary button only. Not used independently.
 
 ### Neutral
@@ -140,11 +140,11 @@ A single-accent system built around one saturated brand color and a warm neutral
 
 ## 4. Elevation
 
-This system is tonal and nearly flat. Surfaces are distinguished primarily by background color and left-border accents, not by shadow depth. Shadows exist but are ambient and restrained — they describe presence, not hierarchy.
+This system is tonal and nearly flat. Surfaces are distinguished primarily by background color and top-border accents, not by shadow depth. Shadows exist but are ambient and restrained — they describe presence, not hierarchy.
 
 Cards use a green-tinted ambient shadow (`0 2px 16px rgba(45, 94, 58, 0.10)`) that ties shadow color to the brand. On the warm parchment background, this creates a gentle lift without drama. Input/field containers on the Step 1 and Step 2 pages use a minimal ambient shadow (`0 1px 4px rgba(0,0,0,0.06)`) — barely visible, just enough to separate white from parchment.
 
-The primary tonal device in the output panel is the green left border on section cards — a structural accent that organizes sections without adding z-axis complexity.
+The primary tonal device in the output panel is the green top border (3px) on section cards — a structural accent that organizes sections without adding z-axis complexity, and without the side-stripe pattern the system bans.
 
 ### Shadow Vocabulary
 - **Card shadow** (`0 2px 16px rgba(45, 94, 58, 0.10)`): Output panel section cards and step cards. Green-tinted ambient lift.
@@ -170,9 +170,9 @@ Buttons are confident and restrained. Hover states are controlled — a backgrou
 
 **Wizard step cards** (NicheSelector, CompanyProfile, TaskAudit): White background, 8px radius, 1px Warm Sand border, minimal ambient shadow. Padding 32px. These are the working surface — quiet, document-like.
 
-**Output section cards** (OutputPanel SectionCard): White background, 8px radius, green left border (4px solid #2D5E3A), green-tinted ambient shadow. The left border is the primary organizational device in the output view.
+**Output section cards** (OutputPanel SectionCard): White background, 8px radius, 1px Warm Sand border with a green top border (3px solid #2D5E3A), green-tinted ambient shadow. The top border is the primary organizational device in the output view — a structural accent, never a side stripe.
 
-**Selection cards** (NicheSelector options): White at rest, 1.5px Warm Sand border, 5px radius. Selected state: light green background (#F0F4F1), green border thickens to left accent (4px solid #2D5E3A). Never nested inside another card.
+**Selection cards** (NicheSelector options): White at rest, 1.5px Warm Sand border, 5px radius. Selected state: light green background (#F0F4F1) with a full 1.5px Canopy Green border (#2D5E3A). Never a left stripe; never nested inside another card.
 
 ### Inputs / Fields
 Restrained and functional. Focus is acknowledged quietly.
@@ -222,15 +222,15 @@ Dark-on-dark, anchored above the triggering element. CSS-only (no JS positioning
 - **Do** show formulas and calculation traces for every number on the output panel. Transparency is the product.
 - **Do** use the warm parchment background (#EDEADE) as the page canvas and white (#FFFFFF) only for card/input surfaces. The contrast is subtle and intentional.
 - **Do** keep hover and focus states controlled: background color shifts only. No movement, no scale, no transform on buttons.
-- **Do** use left-border accents (4px solid #2D5E3A) as the primary organizational device on output cards. It organizes without adding elevation.
-- **Do** size text for screenshare legibility in the output panel. Output headings should read clearly at 13–15" screen, viewed by two people.
-- **Do** keep borders at 1px or 1.5px for structural lines and Warm Sand borders. The left-border accent (4px) is the only thick border allowed.
+- **Do** use a 3px green top-border accent as the primary organizational device on output cards. It organizes without adding elevation and without a side stripe.
+- **Do** size text for screenshare legibility in the output panel. Client-facing narrative copy holds a 13px floor; 11–12px is reserved for opt-in calculation traces inside an opened disclosure, where the prospect chose to see the math. Output headings should read clearly at 13–15" screen, viewed by two people.
+- **Do** keep borders at 1px or 1.5px for structural lines and Warm Sand borders. The 3px green top-border accent is the only thick border allowed.
 
 ### Don't:
 - **Don't** produce outputs that look like plain Excel/PDF exports: unstyled tables, no hierarchy, no brand markers. This is the named anti-reference. Every output screen must be unmistakably Somerset's work.
 - **Don't** introduce purple, blue, orange, or any additional accent color. The one-accent system is load-bearing — any addition dilutes the green's authority signal.
 - **Don't** use gradient text (`background-clip: text`). Single solid color only.
-- **Don't** use `border-left` greater than 4px as a decorative stripe. The left accent is structural; 4px is the system maximum.
+- **Don't** use a colored `border-left`/`border-right` greater than 1px as an accent stripe on cards, rows, or callouts. The structural accent is a 3px green *top* border; side stripes are banned. Selection states use a full border plus a background tint, never a stripe.
 - **Don't** bold DM Serif Display headings. It has authority without weight; bolding breaks the letterform design.
 - **Don't** use glassmorphism, frosted cards, or backdrop-filter effects. They are decorative and at odds with the document-like canvas.
 - **Don't** use small-caps eyebrow labels on every section (the `ABOUT / PROCESS / PRICING` pattern). This is the AI scaffold reflex. Use DM Serif Display hierarchy instead.
